@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0b0f1a" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#f0f4fb" media="(prefers-color-scheme: light)" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="FlightLog" />
+  <link rel="manifest" href="manifest.json" />
+  <title>FlightLog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="auth-screen" class="screen active">
+    <div class="auth-bg"><div class="runway-lights"></div><div class="horizon"></div></div>
+    <div class="auth-card">
+      <div class="auth-logo">
+        <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+          <polygon points="26,4 48,42 4,42" stroke="currentColor" stroke-width="2" fill="none"/>
+          <polygon points="26,16 38,36 14,36" stroke="currentColor" stroke-width="1" fill="none" opacity="0.4"/>
+          <circle cx="26" cy="28" r="3.5" fill="currentColor"/>
+          <line x1="26" y1="31.5" x2="26" y2="42" stroke="currentColor" stroke-width="1.5"/>
+          <line x1="17" y1="42" x2="35" y2="42" stroke="currentColor" stroke-width="2"/>
+        </svg>
+      </div>
+      <h1 class="auth-title">FLIGHTLOG</h1>
+      <p class="auth-sub">Personal Aviation Logbook</p>
+      <div id="auth-error" class="error-msg hidden"></div>
+      <div id="login-form">
+        <div class="field"><label>EMAIL</label><input type="email" id="login-email" placeholder="pilot@aviation.com" autocomplete="email"/></div>
+        <div class="field"><label>PASSWORD</label><input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password"/></div>
+        <button class="btn-primary" id="login-btn">SIGN IN</button>
+        <button class="btn-text" id="show-register">New pilot? Create account →</button>
+      </div>
+      <div id="register-form" class="hidden">
+        <div class="field"><label>PILOT NAME</label><input type="text" id="reg-name" placeholder="Capt. Jane Smith"/></div>
+        <div class="field"><label>EMAIL</label><input type="email" id="reg-email" placeholder="pilot@aviation.com"/></div>
+        <div class="field"><label>PASSWORD</label><input type="password" id="reg-password" placeholder="Min. 6 characters"/></div>
+        <button class="btn-primary" id="register-btn">CREATE ACCOUNT</button>
+        <button class="btn-text" id="show-login">← Back to sign in</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="app-screen" class="screen hidden">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-top">
+        <div class="sidebar-brand">
+          <svg width="22" height="22" viewBox="0 0 52 52" fill="none"><polygon points="26,4 48,42 4,42" stroke="currentColor" stroke-width="2.5" fill="none"/><circle cx="26" cy="28" r="3.5" fill="currentColor"/></svg>
+          <span>FLIGHTLOG</span>
+        </div>
+        <button class="sidebar-close" id="sidebar-close">✕</button>
+      </div>
+      <div class="pilot-badge">
+        <div class="pilot-avatar" id="pilot-avatar">P</div>
+        <div><div class="pilot-name" id="pilot-name-nav">Pilot</div><div class="pilot-sub">Flight Logbook</div></div>
+      </div>
+      <nav>
+        <a class="nav-item active" data-page="dashboard"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>Dashboard</a>
+        <a class="nav-item" data-page="logbook"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Logbook</a>
+        <a class="nav-item" data-page="new-entry"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>New Flight</a>
+        <a class="nav-item" data-page="charts"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Analytics</a>
+      </nav>
+      <button class="btn-signout" id="signout-btn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sign Out</button>
+    </aside>
+
+    <div class="main">
+      <header class="topbar">
+        <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+        <h2 id="page-title">Dashboard</h2>
+        <div class="topbar-date" id="topbar-date"></div>
+      </header>
+
+      <section class="page active" id="page-dashboard">
+        <div class="stats-grid">
+          <div class="stat-card highlight"><div class="stat-label">TOTAL TIME</div><div class="stat-val" id="s-total">0.0</div><div class="stat-unit">hours</div></div>
+          <div class="stat-card"><div class="stat-label">PIC TIME</div><div class="stat-val" id="s-pic">0.0</div><div class="stat-unit">hours</div></div>
+          <div class="stat-card"><div class="stat-label">NIGHT</div><div class="stat-val" id="s-night">0.0</div><div class="stat-unit">hours</div></div>
+          <div class="stat-card"><div class="stat-label">CROSS COUNTRY</div><div class="stat-val" id="s-xc">0.0</div><div class="stat-unit">hours</div></div>
+          <div class="stat-card"><div class="stat-label">INSTRUMENT</div><div class="stat-val" id="s-inst">0.0</div><div class="stat-unit">hours</div></div>
+          <div class="stat-card"><div class="stat-label">DUAL GIVEN</div><div class="stat-val" id="s-dual-given">0.0</div><div class="stat-unit">hours</div></div>
+          <div class="stat-card"><div class="stat-label">LANDINGS</div><div class="stat-val" id="s-landings">0</div><div class="stat-unit">total</div></div>
+          <div class="stat-card"><div class="stat-label">FLIGHTS</div><div class="stat-val" id="s-flights">0</div><div class="stat-unit">entries</div></div>
+        </div>
+        <div class="section-row"><h3 class="section-heading">ENDORSEMENT HOURS</h3></div>
+        <div class="endorsement-row">
+          <div class="badge"><span class="badge-name">Tailwheel</span><span class="badge-val" id="bv-tailwheel">0.0h</span></div>
+          <div class="badge"><span class="badge-name">High Perf</span><span class="badge-val" id="bv-highperf">0.0h</span></div>
+          <div class="badge"><span class="badge-name">Complex</span><span class="badge-val" id="bv-complex">0.0h</span></div>
+          <div class="badge"><span class="badge-name">Pressurized</span><span class="badge-val" id="bv-pressurized">0.0h</span></div>
+          <div class="badge"><span class="badge-name">Turbocharged</span><span class="badge-val" id="bv-turbo">0.0h</span></div>
+          <div class="badge"><span class="badge-name">TAA</span><span class="badge-val" id="bv-taa">0.0h</span></div>
+          <div class="badge"><span class="badge-name">Turbine</span><span class="badge-val" id="bv-turbine">0.0h</span></div>
+        </div>
+        <div class="section-row"><h3 class="section-heading">RECENT FLIGHTS</h3><a class="section-link" data-page="logbook">View All →</a></div>
+        <div id="recent-list"><div class="empty-msg">No flights yet. <a data-page="new-entry">Log your first flight →</a></div></div>
+      </section>
+
+      <section class="page hidden" id="page-logbook">
+        <div class="toolbar">
+          <div class="search-wrap"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" id="search-input" placeholder="Search tail, route, remarks…"/></div>
+          <div class="filter-row">
+            <select id="filter-type"><option value="">All Aircraft</option></select>
+            <select id="filter-cat"><option value="">All Categories</option><option value="tailwheel">Tailwheel</option><option value="high-perf">High Performance</option><option value="complex">Complex</option><option value="turbine">Turbine</option><option value="taa">TAA</option></select>
+            <input type="date" id="f-date-from"/><input type="date" id="f-date-to"/>
+            <button class="btn-sm-outline" id="clear-filters">Clear</button>
+          </div>
+        </div>
+        <div class="filter-summary" id="filter-summary"></div>
+        <div class="table-scroll">
+          <table class="log-table">
+            <thead><tr><th>DATE</th><th>TAIL</th><th>MAKE/MODEL</th><th>ROUTE</th><th>TOTAL</th><th>PIC</th><th>DUAL REC</th><th>DUAL GIVEN</th><th>XC</th><th>NIGHT</th><th>INST ACT</th><th>INST SIM</th><th>D.LDG</th><th>N.LDG</th><th>FLAGS</th><th>REMARKS</th><th></th></tr></thead>
+            <tbody id="log-tbody"><tr><td colspan="17" class="empty-msg">No flights logged yet.</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="page hidden" id="page-new-entry">
+        <div class="form-wrap">
+          <h3 class="form-heading" id="form-heading">LOG NEW FLIGHT</h3>
+          <input type="hidden" id="edit-id"/>
+          <div class="form-section">
+            <div class="fs-title">FLIGHT INFO</div>
+            <div class="form-grid">
+              <div class="field"><label>DATE <span class="req">*</span></label><input type="date" id="f-date"/></div>
+              <div class="field"><label>FROM <span class="req">*</span></label><input type="text" id="f-from" placeholder="KDEP" maxlength="6"/></div>
+              <div class="field"><label>TO <span class="req">*</span></label><input type="text" id="f-to" placeholder="KARR" maxlength="6"/></div>
+            </div>
+          </div>
+          <div class="form-section">
+            <div class="fs-title">AIRCRAFT</div>
+            <div class="form-grid">
+              <div class="field"><label>TAIL NUMBER <span class="req">*</span></label><input type="text" id="f-tail" placeholder="N12345"/></div>
+              <div class="field"><label>MAKE &amp; MODEL</label><input type="text" id="f-make-model" placeholder="Cessna 172S"/></div>
+              <div class="field"><label>AIRCRAFT TYPE</label><input type="text" id="f-ac-type" placeholder="C172"/></div>
+            </div>
+            <div class="fs-title" style="margin-top:.75rem">ENDORSEMENTS</div>
+            <div class="check-grid">
+              <label class="chk"><input type="checkbox" id="f-tailwheel"/> Tailwheel</label>
+              <label class="chk"><input type="checkbox" id="f-highperf"/> High Performance</label>
+              <label class="chk"><input type="checkbox" id="f-complex"/> Complex</label>
+              <label class="chk"><input type="checkbox" id="f-pressurized"/> Pressurized</label>
+              <label class="chk"><input type="checkbox" id="f-turbo"/> Turbocharged</label>
+              <label class="chk"><input type="checkbox" id="f-taa"/> TAA</label>
+              <label class="chk"><input type="checkbox" id="f-turbine"/> Turbine</label>
+            </div>
+          </div>
+          <div class="form-section">
+            <div class="fs-title">FLIGHT TIME (decimal hours)</div>
+            <div class="form-grid">
+              <div class="field"><label>TOTAL <span class="req">*</span></label><input type="number" id="f-total" step="0.1" min="0" placeholder="1.5"/></div>
+              <div class="field"><label>PIC</label><input type="number" id="f-pic" step="0.1" min="0" placeholder="0.0"/></div>
+              <div class="field"><label>DUAL RECEIVED</label><input type="number" id="f-dual-recv" step="0.1" min="0" placeholder="0.0"/></div>
+              <div class="field"><label>DUAL GIVEN</label><input type="number" id="f-dual-given" step="0.1" min="0" placeholder="0.0"/></div>
+              <div class="field"><label>CROSS COUNTRY</label><input type="number" id="f-xc" step="0.1" min="0" placeholder="0.0"/></div>
+              <div class="field"><label>NIGHT</label><input type="number" id="f-night" step="0.1" min="0" placeholder="0.0"/></div>
+              <div class="field"><label>INSTRUMENT ACTUAL</label><input type="number" id="f-inst-actual" step="0.1" min="0" placeholder="0.0"/></div>
+              <div class="field"><label>INSTRUMENT SIM</label><input type="number" id="f-inst-sim" step="0.1" min="0" placeholder="0.0"/></div>
+            </div>
+          </div>
+          <div class="form-section">
+            <div class="fs-title">LANDINGS</div>
+            <div class="form-grid">
+              <div class="field"><label>DAY LANDINGS</label><input type="number" id="f-ldg-day" step="1" min="0" placeholder="1"/></div>
+              <div class="field"><label>NIGHT LANDINGS</label><input type="number" id="f-ldg-night" step="1" min="0" placeholder="0"/></div>
+            </div>
+          </div>
+          <div class="form-section">
+            <div class="fs-title">REMARKS</div>
+            <div class="field full"><textarea id="f-remarks" rows="3" placeholder="Training, IFR, scenic, checkride…"></textarea></div>
+          </div>
+          <div id="form-err" class="error-msg hidden"></div>
+          <div class="form-actions">
+            <button class="btn-outline" id="cancel-edit" style="display:none">Cancel Edit</button>
+            <button class="btn-primary" id="save-btn">SAVE FLIGHT</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="page hidden" id="page-charts">
+        <div class="charts-grid">
+          <div class="chart-card wide"><div class="chart-label">HOURS PER MONTH</div><canvas id="c-monthly" height="180"></canvas></div>
+          <div class="chart-card wide"><div class="chart-label">CUMULATIVE TOTAL HOURS</div><canvas id="c-cumulative" height="180"></canvas></div>
+          <div class="chart-card"><div class="chart-label">TIME BY AIRCRAFT TYPE</div><canvas id="c-aircraft" height="260"></canvas></div>
+          <div class="chart-card"><div class="chart-label">DAY VS NIGHT</div><canvas id="c-daynight" height="260"></canvas></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div class="overlay hidden" id="overlay"></div>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
