@@ -71,7 +71,7 @@ service cloud.firestore {
 ## PART 2: Update the App Config
 
 ### Step 6 — Edit firebase-config.js
-Open the file `js/firebase-config.js` in any text editor (Notepad works fine).
+Open the file `firebase-config.js` (in the root of the project folder) in any text editor (Notepad works fine).
 
 Replace the placeholder values with your real Firebase values:
 
@@ -84,6 +84,8 @@ const firebaseConfig = {
   messagingSenderId: "123456789",
   appId: "1:123456789:web:abc123"
 };
+
+firebase.initializeApp(firebaseConfig);
 ```
 
 Save the file.
@@ -103,11 +105,13 @@ Save the file.
 
 ### Step 9 — Upload your files
 1. On your new empty repository page, click **uploading an existing file**
-2. Drag and drop ALL the files and folders from the `flight-logbook` folder:
+2. Drag and drop ALL the files and folders from the project folder:
    - `index.html`
    - `manifest.json`
-   - `css/` folder (with style.css inside)
-   - `js/` folder (with firebase-config.js and app.js inside)
+   - `style.css`
+   - `firebase-config.js`
+   - `app.js`
+   - `sw.js`
    - `icons/` folder
 3. Scroll down, click **Commit changes**
 

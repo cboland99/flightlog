@@ -1,9 +1,10 @@
 // FlightLog Service Worker
-const CACHE_NAME = 'flightlog-v1';
+const CACHE_NAME = 'flightlog-v2';
 const ASSETS = [
   '/',
   '/index.html',
   '/style.css',
+  '/firebase-config.js',
   '/app.js',
   '/manifest.json'
 ];
