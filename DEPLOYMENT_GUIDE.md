@@ -44,6 +44,10 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == resource.data.uid;
       allow create: if request.auth != null && request.auth.uid == request.resource.data.uid;
     }
+    match /aircraft/{aircraftId} {
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.uid;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.uid;
+    }
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
@@ -66,6 +70,14 @@ service cloud.firestore {
    - `messagingSenderId`
    - `appId`
 
+const firebaseConfig = {
+  apiKey: "AIzaSyDkvL8rmelghaYAQqzrDx18y88c9qbDNog",
+  authDomain: "flightlog-d084a.firebaseapp.com",
+  projectId: "flightlog-d084a",
+  storageBucket: "flightlog-d084a.firebasestorage.app",
+  messagingSenderId: "1013534574959",
+  appId: "1:1013534574959:web:0a79c61297d1e6dc60809a"
+};
 ---
 
 ## PART 2: Update the App Config
@@ -77,7 +89,7 @@ Replace the placeholder values with your real Firebase values:
 
 ```javascript
 const firebaseConfig = {
-  apiKey: "AIzaSy...",           // ← paste your real value
+  apiKey: "AIzaSyDkvL8rmelghaYAQqzrDx18y88c9qbDNog",           
   authDomain: "flightlog-abc.firebaseapp.com",
   projectId: "flightlog-abc",
   storageBucket: "flightlog-abc.appspot.com",

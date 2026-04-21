@@ -31,18 +31,34 @@
       <p class="auth-sub">Personal Aviation Logbook</p>
       <div id="auth-error" class="error-msg hidden"></div>
       <div id="login-form">
-        <div class="field"><label>EMAIL</label><input type="email" id="login-email" placeholder="pilot@aviation.com" autocomplete="email"/></div>
-        <div class="field"><label>PASSWORD</label><input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password"/></div>
+        <div class="field"><label>EMAIL</label><input type="email" id="login-email" placeholder="pilot@aviation.com" autocomplete="email" value="connor.j.boland@gamil.com"/></div>
+        <div class="field"><label>PASSWORD</label><input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" value="password"/></div>
         <button class="btn-primary" id="login-btn">SIGN IN</button>
         <button class="btn-text" id="show-register">New pilot? Create account →</button>
       </div>
-      <div id="register-form" class="hidden">
-        <div class="field"><label>PILOT NAME</label><input type="text" id="reg-name" placeholder="Capt. Jane Smith"/></div>
-        <div class="field"><label>EMAIL</label><input type="email" id="reg-email" placeholder="pilot@aviation.com"/></div>
-        <div class="field"><label>PASSWORD</label><input type="password" id="reg-password" placeholder="Min. 6 characters"/></div>
-        <button class="btn-primary" id="register-btn">CREATE ACCOUNT</button>
-        <button class="btn-text" id="show-login">← Back to sign in</button>
+    </div>
+  </div>
+
+  <div id="register-screen" class="screen hidden">
+    <div class="auth-bg"><div class="runway-lights"></div><div class="horizon"></div></div>
+    <div class="auth-card">
+      <div class="auth-logo">
+        <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+          <polygon points="26,4 48,42 4,42" stroke="currentColor" stroke-width="2" fill="none"/>
+          <polygon points="26,16 38,36 14,36" stroke="currentColor" stroke-width="1" fill="none" opacity="0.4"/>
+          <circle cx="26" cy="28" r="3.5" fill="currentColor"/>
+          <line x1="26" y1="31.5" x2="26" y2="42" stroke="currentColor" stroke-width="1.5"/>
+          <line x1="17" y1="42" x2="35" y2="42" stroke="currentColor" stroke-width="2"/>
+        </svg>
       </div>
+      <h1 class="auth-title">FLIGHTLOG</h1>
+      <p class="auth-sub">Create your pilot account</p>
+      <div id="reg-error" class="error-msg hidden"></div>
+      <div class="field"><label>PILOT NAME</label><input type="text" id="reg-name" placeholder="Capt. Jane Smith"/></div>
+      <div class="field"><label>EMAIL</label><input type="email" id="reg-email" placeholder="pilot@aviation.com"/></div>
+      <div class="field"><label>PASSWORD</label><input type="password" id="reg-password" placeholder="Min. 6 characters"/></div>
+      <button class="btn-primary" id="register-btn">CREATE ACCOUNT</button>
+      <button class="btn-text" id="show-login">← Back to sign in</button>
     </div>
   </div>
 
@@ -64,6 +80,7 @@
         <a class="nav-item" data-page="logbook"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Logbook</a>
         <a class="nav-item" data-page="new-entry"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>New Flight</a>
         <a class="nav-item" data-page="charts"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Analytics</a>
+        <a class="nav-item" data-page="aircraft"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>Aircraft</a>
       </nav>
       <button class="btn-signout" id="signout-btn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sign Out</button>
     </aside>
@@ -86,17 +103,16 @@
           <div class="stat-card"><div class="stat-label">LANDINGS</div><div class="stat-val" id="s-landings">0</div><div class="stat-unit">total</div></div>
           <div class="stat-card"><div class="stat-label">FLIGHTS</div><div class="stat-val" id="s-flights">0</div><div class="stat-unit">entries</div></div>
         </div>
-        <div class="section-row"><h3 class="section-heading">ENDORSEMENT HOURS</h3></div>
-        <div class="endorsement-row">
-          <div class="badge"><span class="badge-name">Tailwheel</span><span class="badge-val" id="bv-tailwheel">0.0h</span></div>
-          <div class="badge"><span class="badge-name">High Perf</span><span class="badge-val" id="bv-highperf">0.0h</span></div>
-          <div class="badge"><span class="badge-name">Complex</span><span class="badge-val" id="bv-complex">0.0h</span></div>
-          <div class="badge"><span class="badge-name">Pressurized</span><span class="badge-val" id="bv-pressurized">0.0h</span></div>
-          <div class="badge"><span class="badge-name">Turbocharged</span><span class="badge-val" id="bv-turbo">0.0h</span></div>
-          <div class="badge"><span class="badge-name">TAA</span><span class="badge-val" id="bv-taa">0.0h</span></div>
-          <div class="badge"><span class="badge-name">Turbine</span><span class="badge-val" id="bv-turbine">0.0h</span></div>
+        <div class="section-row"><h3 class="section-heading">CURRENCY</h3></div>
+        <div id="currency-ldg-grid" class="currency-grid"></div>
+        <div class="currency-grid" style="margin-top:8px">
+          <div class="currency-card">
+            <div class="currency-label">APPROACHES — LAST 6 MONTHS</div>
+            <div class="currency-val" id="c-appr-6mo"></div>
+            <div class="currency-sub" id="c-appr-6mo-sub"></div>
+          </div>
         </div>
-        <div class="section-row"><h3 class="section-heading">RECENT FLIGHTS</h3><a class="section-link" data-page="logbook">View All →</a></div>
+        <div class="section-row" style="margin-top:1.25rem"><h3 class="section-heading">RECENT FLIGHTS</h3><a class="section-link" data-page="logbook">View All →</a></div>
         <div id="recent-list"><div class="empty-msg">No flights yet. <a data-page="new-entry">Log your first flight →</a></div></div>
       </section>
 
@@ -105,7 +121,6 @@
           <div class="search-wrap"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" id="search-input" placeholder="Search tail, route, remarks…"/></div>
           <div class="filter-row">
             <select id="filter-type"><option value="">All Aircraft</option></select>
-            <select id="filter-cat"><option value="">All Categories</option><option value="tailwheel">Tailwheel</option><option value="high-perf">High Performance</option><option value="complex">Complex</option><option value="turbine">Turbine</option><option value="taa">TAA</option></select>
             <input type="date" id="f-date-from"/><input type="date" id="f-date-to"/>
             <button class="btn-sm-outline" id="clear-filters">Clear</button>
           </div>
@@ -113,8 +128,8 @@
         <div class="filter-summary" id="filter-summary"></div>
         <div class="table-scroll">
           <table class="log-table">
-            <thead><tr><th>DATE</th><th>TAIL</th><th>MAKE/MODEL</th><th>ROUTE</th><th>TOTAL</th><th>PIC</th><th>DUAL REC</th><th>DUAL GIVEN</th><th>XC</th><th>NIGHT</th><th>INST ACT</th><th>INST SIM</th><th>D.LDG</th><th>N.LDG</th><th>FLAGS</th><th>REMARKS</th><th></th></tr></thead>
-            <tbody id="log-tbody"><tr><td colspan="17" class="empty-msg">No flights logged yet.</td></tr></tbody>
+            <thead><tr><th>DATE</th><th>TAIL</th><th>MAKE/MODEL</th><th>ROUTE</th><th>TOTAL</th><th>PIC</th><th>SIC</th><th>DUAL REC</th><th>DUAL GIVEN</th><th>DAY</th><th>XC</th><th>NIGHT</th><th>INST ACT</th><th>INST SIM</th><th>APPR ACT</th><th>APPR SIM</th><th>D.LDG</th><th>N.LDG</th><th>SOLO</th><th>REMARKS</th><th></th></tr></thead>
+            <tbody id="log-tbody"><tr><td colspan="21" class="empty-msg">No flights logged yet.</td></tr></tbody>
           </table>
         </div>
       </section>
@@ -127,56 +142,74 @@
             <div class="fs-title">FLIGHT INFO</div>
             <div class="form-grid">
               <div class="field"><label>DATE <span class="req">*</span></label><input type="date" id="f-date"/></div>
-              <div class="field"><label>FROM <span class="req">*</span></label><input type="text" id="f-from" placeholder="KDEP" maxlength="6"/></div>
-              <div class="field"><label>TO <span class="req">*</span></label><input type="text" id="f-to" placeholder="KARR" maxlength="6"/></div>
+              <div class="field"><label>DEPARTURE AIRPORT <span class="req">*</span></label><input type="text" id="f-from" placeholder="" maxlength="6"/></div>
+              <div class="field"><label>POINTS OF LANDING</label><input type="text" id="f-via" placeholder="Kxxx, Kxxx"/></div>
+              <div class="field"><label>ARRIVAL AIRPORT <span class="req">*</span></label><input type="text" id="f-to" placeholder="" maxlength="6"/></div>
             </div>
           </div>
           <div class="form-section">
             <div class="fs-title">AIRCRAFT</div>
             <div class="form-grid">
-              <div class="field"><label>TAIL NUMBER <span class="req">*</span></label><input type="text" id="f-tail" placeholder="N12345"/></div>
-              <div class="field"><label>MAKE &amp; MODEL</label><input type="text" id="f-make-model" placeholder="Cessna 172S"/></div>
-              <div class="field"><label>AIRCRAFT TYPE</label><input type="text" id="f-ac-type" placeholder="C172"/></div>
-            </div>
-            <div class="fs-title" style="margin-top:.75rem">ENDORSEMENTS</div>
-            <div class="check-grid">
-              <label class="chk"><input type="checkbox" id="f-tailwheel"/> Tailwheel</label>
-              <label class="chk"><input type="checkbox" id="f-highperf"/> High Performance</label>
-              <label class="chk"><input type="checkbox" id="f-complex"/> Complex</label>
-              <label class="chk"><input type="checkbox" id="f-pressurized"/> Pressurized</label>
-              <label class="chk"><input type="checkbox" id="f-turbo"/> Turbocharged</label>
-              <label class="chk"><input type="checkbox" id="f-taa"/> TAA</label>
-              <label class="chk"><input type="checkbox" id="f-turbine"/> Turbine</label>
+              <div class="field">
+                <label>TAIL NUMBER <span class="req">*</span></label>
+                <input type="text" id="f-tail" list="tail-datalist" placeholder="N12345" autocomplete="off"/>
+                <datalist id="tail-datalist"></datalist>
+              </div>
+              <div class="field"><label>MAKE &amp; VARIANT</label><input type="text" id="f-make-model" placeholder=" " readonly/></div>
             </div>
           </div>
           <div class="form-section">
-            <div class="fs-title">FLIGHT TIME (decimal hours)</div>
+            <div class="fs-title">FLIGHT TIME</div>
             <div class="form-grid">
-              <div class="field"><label>TOTAL <span class="req">*</span></label><input type="number" id="f-total" step="0.1" min="0" placeholder="1.5"/></div>
-              <div class="field"><label>PIC</label><input type="number" id="f-pic" step="0.1" min="0" placeholder="0.0"/></div>
-              <div class="field"><label>DUAL RECEIVED</label><input type="number" id="f-dual-recv" step="0.1" min="0" placeholder="0.0"/></div>
-              <div class="field"><label>DUAL GIVEN</label><input type="number" id="f-dual-given" step="0.1" min="0" placeholder="0.0"/></div>
-              <div class="field"><label>CROSS COUNTRY</label><input type="number" id="f-xc" step="0.1" min="0" placeholder="0.0"/></div>
-              <div class="field"><label>NIGHT</label><input type="number" id="f-night" step="0.1" min="0" placeholder="0.0"/></div>
-              <div class="field"><label>INSTRUMENT ACTUAL</label><input type="number" id="f-inst-actual" step="0.1" min="0" placeholder="0.0"/></div>
-              <div class="field"><label>INSTRUMENT SIM</label><input type="number" id="f-inst-sim" step="0.1" min="0" placeholder="0.0"/></div>
+              <div class="field"><label>TOTAL <span class="req">*</span></label><input type="number" id="f-total" step="0.1" min="0" placeholder="0"/></div>
+              <div class="field"><label>PIC</label><input type="number" id="f-pic" step="0.1" min="0" placeholder="0"/></div>
+              <div class="field"><label>SIC</label><input type="number" id="f-sic" step="0.1" min="0" placeholder="0"/></div>
+              <div class="field"><label>DUAL RECEIVED</label><input type="number" id="f-dual-recv" step="0.1" min="0" placeholder="0"/></div>
+              <div class="field"><label>DUAL GIVEN</label><input type="number" id="f-dual-given" step="0.1" min="0" placeholder="0"/></div>
+              <div class="field"><label>DAY</label><input type="number" id="f-day" step="0.1" min="0" placeholder="0"/></div>
+              <div class="field"><label>CROSS COUNTRY</label><input type="number" id="f-xc" step="0.1" min="0" placeholder="0"/></div>
+              <div class="field"><label>NIGHT</label><input type="number" id="f-night" step="0.1" min="0" placeholder="0"/></div>
+              <div class="field"><label>INSTRUMENT ACTUAL</label><input type="number" id="f-inst-actual" step="0.1" min="0" placeholder="0"/></div>
+              <div class="field"><label>INSTRUMENT SIM</label><input type="number" id="f-inst-sim" step="0.1" min="0" placeholder="0"/></div>
+              <div class="field"><label>APPROACHES (ACTUAL)</label><input type="number" id="f-appr-actual" step="1" min="0" placeholder="0"/></div>
+              <div class="field"><label>APPROACHES (SIM)</label><input type="number" id="f-appr-sim" step="1" min="0" placeholder="0"/></div>
+            </div>
+            <div class="fs-title" style="margin-top:.85rem">CONDITIONS</div>
+            <div class="check-grid">
+              <label class="chk"><input type="checkbox" id="f-solo"/> Solo</label>
             </div>
           </div>
           <div class="form-section">
             <div class="fs-title">LANDINGS</div>
             <div class="form-grid">
-              <div class="field"><label>DAY LANDINGS</label><input type="number" id="f-ldg-day" step="1" min="0" placeholder="1"/></div>
+              <div class="field"><label>DAY LANDINGS</label><input type="number" id="f-ldg-day" step="1" min="0" placeholder="0"/></div>
               <div class="field"><label>NIGHT LANDINGS</label><input type="number" id="f-ldg-night" step="1" min="0" placeholder="0"/></div>
             </div>
           </div>
           <div class="form-section">
             <div class="fs-title">REMARKS</div>
-            <div class="field full"><textarea id="f-remarks" rows="3" placeholder="Training, IFR, scenic, checkride…"></textarea></div>
+            <div class="field full"><textarea id="f-remarks" rows="3" placeholder="Weather, Training, Approaches, notes"></textarea></div>
           </div>
           <div id="form-err" class="error-msg hidden"></div>
           <div class="form-actions">
             <button class="btn-outline" id="cancel-edit" style="display:none">Cancel Edit</button>
             <button class="btn-primary" id="save-btn">SAVE FLIGHT</button>
+          </div>
+          <div class="bulk-import-divider"><span>OR</span></div>
+          <div class="form-section" id="bulk-import-section">
+            <div class="fs-title">BULK IMPORT FROM CSV
+              <button class="btn-text" id="csv-template-btn" style="float:right;font-size:.7rem;padding:0">Download Template</button>
+            </div>
+            <p class="import-hint">Upload a .csv file to import multiple past flights at once. Each row must include at minimum: <strong>date, tail, total</strong>.</p>
+            <div class="field full">
+              <label>SELECT CSV FILE</label>
+              <input type="file" id="csv-file-input" accept=".csv"/>
+            </div>
+            <div id="csv-err" class="error-msg hidden"></div>
+            <div id="csv-status" class="hidden"></div>
+            <div class="form-actions" style="margin-top:.75rem">
+              <button class="btn-primary" id="csv-import-btn">IMPORT FLIGHTS</button>
+            </div>
           </div>
         </div>
       </section>
@@ -187,6 +220,64 @@
           <div class="chart-card wide"><div class="chart-label">CUMULATIVE TOTAL HOURS</div><canvas id="c-cumulative" height="180"></canvas></div>
           <div class="chart-card"><div class="chart-label">TIME BY AIRCRAFT TYPE</div><canvas id="c-aircraft" height="260"></canvas></div>
           <div class="chart-card"><div class="chart-label">DAY VS NIGHT</div><canvas id="c-daynight" height="260"></canvas></div>
+        </div>
+      </section>
+
+      <section class="page hidden" id="page-aircraft">
+        <div class="ac-page-header">
+          <h3 class="section-heading">MY AIRCRAFT</h3>
+          <button class="btn-sm-outline" id="add-aircraft-btn">+ Add Aircraft</button>
+        </div>
+
+        <div id="ac-form-wrap" class="hidden">
+          <div class="form-section">
+            <div class="fs-title" id="ac-form-heading">ADD AIRCRAFT</div>
+            <input type="hidden" id="ac-edit-id"/>
+            <div class="form-grid">
+              <div class="field"><label>TAIL NUMBER <span class="req">*</span></label><input type="text" id="ac-tail" placeholder="N12345"/></div>
+              <div class="field"><label>MAKE</label><input type="text" id="ac-make" placeholder="Cessna"/></div>
+              <div class="field"><label>MODEL</label><input type="text" id="ac-model" placeholder="172"/></div>
+              <div class="field"><label>VARIANT</label><input type="text" id="ac-variant" placeholder="Skyhawk S"/></div>
+              <div class="field"><label>YEAR</label><input type="number" id="ac-year" placeholder="2019" min="1900" max="2099" step="1"/></div>
+              <div class="field"><label>CLASS</label>
+                <select id="ac-class">
+                  <option value="">— Select —</option>
+                  <option value="SEL">SEL (Single Engine Land)</option>
+                  <option value="MEL">MEL (Multi Engine Land)</option>
+                  <option value="SES">SES (Single Engine Sea)</option>
+                  <option value="MES">MES (Multi Engine Sea)</option>
+                </select>
+              </div>
+              <div class="field"><label>CATEGORY</label>
+                <select id="ac-category">
+                  <option value="">— Select —</option>
+                  <option value="Airplane">Airplane</option>
+                  <option value="Glider">Glider</option>
+                  <option value="Rotorcraft">Rotorcraft</option>
+                  <option value="Powered Lift">Powered Lift</option>
+                </select>
+              </div>
+              <div class="field"><label>TYPE DESIGNATOR</label><input type="text" id="ac-type" placeholder="C172"/></div>
+            </div>
+            <div class="fs-title" style="margin-top:.85rem">CHARACTERISTICS</div>
+            <div class="check-grid">
+              <label class="chk"><input type="checkbox" id="ac-highperf"/> High Performance</label>
+              <label class="chk"><input type="checkbox" id="ac-complex"/> Complex</label>
+              <label class="chk"><input type="checkbox" id="ac-taa"/> TAA</label>
+              <label class="chk"><input type="checkbox" id="ac-turbine"/> Turbine</label>
+              <label class="chk"><input type="checkbox" id="ac-tailwheel"/> Tailwheel</label>
+              <label class="chk"><input type="checkbox" id="ac-pressurized"/> Pressurized</label>
+            </div>
+            <div id="ac-form-err" class="error-msg hidden"></div>
+            <div class="form-actions">
+              <button class="btn-outline" id="ac-cancel-btn">Cancel</button>
+              <button class="btn-primary" id="ac-save-btn">SAVE AIRCRAFT</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="aircraft-list">
+          <div class="empty-msg">No aircraft added yet. Click "+ Add Aircraft" to get started.</div>
         </div>
       </section>
     </div>

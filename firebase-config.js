@@ -3,12 +3,12 @@
 // Find them in: Firebase Console → Project Settings → Your apps → Web app config
 
 const firebaseConfig = {
-  apiKey: "REPLACE_WITH_YOUR_API_KEY",
-  authDomain: "REPLACE_WITH_YOUR_AUTH_DOMAIN",
-  projectId: "REPLACE_WITH_YOUR_PROJECT_ID",
-  storageBucket: "REPLACE_WITH_YOUR_STORAGE_BUCKET",
-  messagingSenderId: "REPLACE_WITH_YOUR_MESSAGING_SENDER_ID",
-  appId: "REPLACE_WITH_YOUR_APP_ID"
+  apiKey: "AIzaSyDkvL8rmelghaYAQqzrDx18y88c9qbDNog",
+  authDomain: "flightlog-d084a.firebaseapp.com",
+  projectId: "flightlog-d084a",
+  storageBucket: "flightlog-d084a.firebasestorage.app",
+  messagingSenderId: "1013534574959",
+  appId: "1:1013534574959:web:0a79c61297d1e6dc60809a"
 };
 
 firebase.initializeApp(firebaseConfig);
