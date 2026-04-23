@@ -131,6 +131,23 @@
             <select id="filter-type"><option value="">All Aircraft</option></select>
             <input type="date" id="f-date-from"/><input type="date" id="f-date-to"/>
             <button class="btn-sm-outline" id="clear-filters">Clear</button>
+            <button class="btn-sm-outline" id="export-csv-btn">Export CSV</button>
+          </div>
+        </div>
+
+        <!-- Export modal -->
+        <div class="modal-backdrop hidden" id="export-modal-backdrop">
+          <div class="modal-box" id="export-modal">
+            <div class="modal-title">EXPORT FLIGHT LOG</div>
+            <div class="export-row">
+              <div class="af-field"><label>FROM (optional)</label><input type="date" id="export-from"/></div>
+              <div class="af-field"><label>TO (optional)</label><input type="date" id="export-to"/></div>
+            </div>
+            <div class="export-count" id="export-count"></div>
+            <div class="modal-actions">
+              <button class="btn-outline" id="export-cancel-btn">Cancel</button>
+              <button class="btn-primary" id="export-confirm-btn">Download CSV</button>
+            </div>
           </div>
         </div>
         <div class="filter-summary" id="filter-summary"></div>

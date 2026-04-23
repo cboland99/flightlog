@@ -1382,6 +1382,54 @@ nav {
   flex-shrink: 0;
 }
 
+/* ============================================
+   EXPORT MODAL
+============================================ */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+}
+.modal-backdrop.hidden { display: none; }
+.modal-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px 28px 22px;
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  box-shadow: 0 16px 48px rgba(0,0,0,.6);
+}
+.modal-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  color: var(--text3);
+}
+.export-row {
+  display: flex;
+  gap: 14px;
+}
+.export-row .af-field { flex: 1; }
+.export-count {
+  font-size: .8rem;
+  color: var(--text3);
+  min-height: 1.2em;
+}
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
 /* ---- SCROLLBAR ---- */
 ::-webkit-scrollbar        { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track  { background: transparent; }

@@ -471,6 +471,87 @@ $('clear-filters').addEventListener('click', () => {
 });
 
 // ============================================
+// CSV EXPORT
+// ============================================
+
+function exportFlightsToCSV(flights) {
+  const HEADERS = [
+    'date','tail','depAirport','arrAirport','total','pic','sic','dualRecv','dualGiven',
+    'dayTime','xc','night','instActual','instSim','apprActual','apprSim',
+    'ldgDay','ldgNight','solo','remarks'
+  ];
+  const LABELS = [
+    'Date','Tail','Dep Airport','Arr Airport','Total','PIC','SIC','Dual Received','Dual Given',
+    'Day Time','Cross Country','Night','Inst Actual','Inst Sim','Appr Actual','Appr Sim',
+    'Day Landings','Night Landings','Solo','Remarks'
+  ];
+
+  const esc = v => {
+    const s = v == null ? '' : String(v);
+    return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+
+  const rows = [LABELS.join(',')];
+  [...flights].sort((a, b) => (a.date || '').localeCompare(b.date || ''))
+    .forEach(f => {
+      rows.push(HEADERS.map(k => {
+        if (k === 'solo') return f.solo ? 'true' : 'false';
+        return esc(f[k] != null && f[k] !== '' ? f[k] : '');
+      }).join(','));
+    });
+
+  const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const from = $('export-from').value;
+  const to   = $('export-to').value;
+  const tag  = from || to ? `_${from || ''}${to ? '_to_' + to : ''}` : '_all';
+  a.href     = url;
+  a.download = `flightlog${tag}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function updateExportCount() {
+  const from = $('export-from').value;
+  const to   = $('export-to').value;
+  const count = allFlights.filter(f =>
+    (!from || f.date >= from) && (!to || f.date <= to)
+  ).length;
+  $('export-count').textContent = `${count} flight${count !== 1 ? 's' : ''} will be exported`;
+}
+
+$('export-csv-btn').addEventListener('click', () => {
+  $('export-from').value = '';
+  $('export-to').value   = '';
+  updateExportCount();
+  $('export-modal-backdrop').classList.remove('hidden');
+});
+
+$('export-cancel-btn').addEventListener('click', () => {
+  $('export-modal-backdrop').classList.add('hidden');
+});
+
+$('export-modal-backdrop').addEventListener('click', e => {
+  if (e.target === $('export-modal-backdrop')) $('export-modal-backdrop').classList.add('hidden');
+});
+
+['export-from','export-to'].forEach(id =>
+  $(id).addEventListener('change', updateExportCount)
+);
+
+$('export-confirm-btn').addEventListener('click', () => {
+  const from = $('export-from').value;
+  const to   = $('export-to').value;
+  const flights = allFlights.filter(f =>
+    (!from || f.date >= from) && (!to || f.date <= to)
+  );
+  if (!flights.length) return;
+  exportFlightsToCSV(flights);
+  $('export-modal-backdrop').classList.add('hidden');
+});
+
+// ============================================
 // NEW ENTRY / EDIT FORM
 // ============================================
 
@@ -577,7 +658,7 @@ $('save-btn').addEventListener('click', async () => {
 
     const round = v => Math.round(v * 100) / 100;
 
-    if (round(pic + sic + dualRecv) < round(total))
+    if (pic + sic + dualRecv < total - 0.005)
       errs.push('PIC + SIC + Dual Received must be greater than or equal to Total time.');
     if (round(dayTime + night) !== round(total))
       errs.push('Day time + Night time must equal Total time.');
@@ -1100,7 +1181,7 @@ const CSV_ALIASES = {
   arrival: 'to', 'arrival airport': 'to',
   'points of landing': 'via', via: 'via',
   'tail number': 'tail', 'tail #': 'tail',
-  'make & variant': 'makemodel', makemodel: 'makeModel', 'make/model': 'makeModel',
+  'make & variant': 'makeModel', makemodel: 'makeModel', 'make/model': 'makeModel',
   'total time': 'total',
   'cross country': 'xc', 'cross-country': 'xc',
   'instrument actual': 'instActual', 'inst actual': 'instActual',
@@ -1133,10 +1214,14 @@ function parseCSV(text) {
   return rows;
 }
 
+// Maps lowercase → canonical camelCase so headers like 'ldgDay', 'dualRecv' survive lowercasing
+const CSV_COLUMN_MAP = {};
+CSV_COLUMNS.forEach(c => { CSV_COLUMN_MAP[c.toLowerCase()] = c; });
+
 function resolveHeader(raw) {
   const lower = raw.toLowerCase().trim();
-  if (CSV_COLUMNS.includes(lower)) return lower;
-  if (CSV_ALIASES[lower]) return CSV_ALIASES[lower];
+  if (CSV_COLUMN_MAP[lower]) return CSV_COLUMN_MAP[lower];
+  if (CSV_ALIASES[lower])    return CSV_ALIASES[lower];
   return lower;
 }
 
@@ -1147,7 +1232,7 @@ function validateCsvRow(d, rowNum) {
   if (!d.total || d.total <= 0) errs.push('total must be > 0');
   const round = v => Math.round(v * 100) / 100;
   if (d.total > 0) {
-    if (round(d.pic + d.sic + d.dualRecv) < round(d.total))
+    if (d.pic + d.sic + d.dualRecv < d.total - 0.005)
       errs.push('PIC+SIC+DualRecv < total');
     if ((d.dayTime > 0 || d.night > 0) && round(d.dayTime + d.night) !== round(d.total))
       errs.push('dayTime+night ≠ total');
@@ -1163,8 +1248,6 @@ function validateCsvRow(d, rowNum) {
     if (d.solo) {
       if (d.sic > 0 || d.dualRecv > 0 || d.dualGiven > 0 || d.instSim > 0 || d.apprSim > 0)
         errs.push('solo: SIC/DualRecv/DualGiven/InstSim/ApprSim must be 0');
-      if (d.ldgDay + d.ldgNight < 1)
-        errs.push('solo: day+night landings must be ≥ 1');
     }
     if (d.apprActual > 0 && d.instActual <= 0) errs.push('instActual must be > 0 when apprActual > 0');
     if (d.apprSim    > 0 && d.instSim    <= 0) errs.push('instSim must be > 0 when apprSim > 0');
