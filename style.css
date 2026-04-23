@@ -551,6 +551,24 @@ nav {
   font-size: 11px;
   color: var(--text3);
 }
+.currency-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.currency-badge {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 7.5px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 3px 7px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.currency-badge.current     { background: rgba(16,185,129,.15); color: var(--green); }
+.currency-badge.not-current { background: rgba(239,68,68,.12);  color: var(--red);   }
 
 .section-row {
   display: flex;
@@ -844,6 +862,175 @@ nav {
 }
 .form-actions .btn-primary { flex: 1; margin-bottom: 0; }
 
+/* ---- Certificates & Endorsements ---- */
+.certs-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin-top: 10px;
+}
+.cert-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.cert-card-wide { grid-column: 1 / -1; }
+
+.cert-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.cert-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--text2);
+}
+.cert-subtitle {
+  font-size: 12px;
+  color: var(--text3);
+  margin-top: 2px;
+}
+.cert-dates {
+  font-size: .82rem;
+  color: var(--text2);
+  line-height: 1.5;
+}
+.cert-dates strong { color: var(--text); }
+.cert-badge {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.cert-badge.current  { background: rgba(16,185,129,.15); color: var(--green); }
+.cert-badge.expiring { background: rgba(245,158,11,.15);  color: var(--amber); }
+.cert-badge.expired  { background: rgba(239,68,68,.12);   color: var(--red);   }
+.cert-badge.none     { background: var(--bg2); color: var(--text3); }
+.cert-badge.permanent{ background: rgba(14,165,233,.12);  color: var(--accent2); }
+/* Medical multi-line dates */
+.med-date-line {
+  font-size: .8rem;
+  color: var(--text2);
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.med-date-line strong { color: var(--text); }
+
+/* Rating rows in pilot cert form */
+.ratings-form { display: flex; flex-direction: column; gap: 6px; }
+.rating-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.rating-row .chk { min-width: 160px; flex-shrink: 0; }
+.rating-date {
+  flex: 1;
+  max-width: 180px;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface2);
+  color: var(--text);
+  font-size: .82rem;
+}
+
+/* Pilot cert display */
+.pc-ratings-list { margin-top: 6px; }
+.pc-rating-line {
+  font-size: .8rem;
+  color: var(--text2);
+  padding: 2px 0;
+  border-bottom: 1px solid var(--bg2);
+}
+.pc-rating-line:last-child { border-bottom: none; }
+
+.cert-num-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text3);
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+.pilot-cert-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--text3);
+  letter-spacing: .5px;
+  margin-top: 2px;
+}
+
+.field-hint {
+  font-size: .72rem;
+  color: var(--text3);
+  margin-top: 3px;
+}
+
+/* Endorsement list */
+.endorsement-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 8px;
+}
+.end-info { flex: 1; min-width: 0; }
+.end-name {
+  font-weight: 600;
+  color: var(--text);
+  font-size: .9rem;
+  margin-bottom: 3px;
+}
+.end-dates {
+  font-size: .78rem;
+  color: var(--text3);
+}
+.end-notes {
+  font-size: .78rem;
+  color: var(--text3);
+  margin-top: 3px;
+  font-style: italic;
+}
+.end-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.end-actions {
+  display: flex;
+  gap: 8px;
+}
+.btn-text.danger { color: var(--red); }
+.btn-text.danger:hover { color: var(--red); opacity: .7; }
+
+@media (max-width: 600px) {
+  .certs-grid { grid-template-columns: 1fr; }
+}
+
 /* ---- Bulk Import ---- */
 .bulk-import-divider {
   display: flex;
@@ -904,6 +1091,139 @@ nav {
 /* ============================================
    ANALYTICS / CHARTS
 ============================================ */
+
+/* Filter bar */
+.analytics-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 12px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 14px;
+}
+.af-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 100px;
+}
+.af-field label {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--text3);
+  text-transform: uppercase;
+}
+.af-field input[type=date] {
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface2);
+  color: var(--text);
+  font-size: .8rem;
+  height: 30px;
+}
+.af-ms {
+  position: relative;
+}
+.af-ms-btn {
+  width: 100%;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface2);
+  color: var(--text);
+  font-size: .78rem;
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.af-ms-btn:hover { border-color: var(--accent); }
+.af-ms-panel {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 140px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 0;
+  z-index: 200;
+  box-shadow: 0 8px 24px rgba(0,0,0,.5);
+  max-height: 220px;
+  overflow-y: auto;
+}
+.af-ms-panel.af-ms-open { display: block; }
+.af-ms-opt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  font-size: .8rem;
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.af-ms-opt:hover { background: var(--surface2); }
+.af-ms-opt input[type=checkbox] {
+  accent-color: var(--accent);
+  width: 13px;
+  height: 13px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.af-count {
+  font-size: .75rem;
+  color: var(--text3);
+  align-self: flex-end;
+  padding-bottom: 6px;
+}
+
+/* Analytics stat cards */
+.analytics-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.analytics-stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.asc-label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  color: var(--text3);
+  text-transform: uppercase;
+}
+.asc-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--accent);
+  line-height: 1.1;
+}
+.asc-unit {
+  font-size: .65rem;
+  font-weight: 400;
+  color: var(--text3);
+  margin-left: 2px;
+}
+
 .charts-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

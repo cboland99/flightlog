@@ -48,6 +48,10 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == resource.data.uid;
       allow create: if request.auth != null && request.auth.uid == request.resource.data.uid;
     }
+    match /endorsements/{endorsementId} {
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.uid;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.uid;
+    }
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }

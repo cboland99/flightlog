@@ -12,9 +12,13 @@ let allFlights    = [];
 let editingId     = null;
 let charts        = {};
 let unsubFlights  = null;
-let allAircraft   = [];
-let editingAcId   = null;
-let unsubAircraft = null;
+let allAircraft       = [];
+let editingAcId       = null;
+let unsubAircraft     = null;
+let allEndorsements   = [];
+let editingEndId      = null;
+let unsubEndorsements = null;
+let userCerts         = { medical: null, bfr: null, pilotCert: null, cfiCurrency: null };
 
 // ---- DOM HELPER ----
 const $ = id => document.getElementById(id);
@@ -37,10 +41,12 @@ function navigate(page) {
     logbook:    'Logbook',
     'new-entry':'New Flight',
     charts:     'Analytics',
-    aircraft:   'Aircraft'
+    aircraft:   'Aircraft',
+    certs:      'Certificates'
   }[page] || page;
   closeSidebar();
-  if (page === 'charts') setTimeout(renderCharts, 50);
+  if (page === 'charts') setTimeout(renderAnalytics, 50);
+  if (page === 'certs')  renderCertsPage();
 }
 
 document.querySelectorAll('[data-page]').forEach(el =>
@@ -124,8 +130,9 @@ $('show-login').addEventListener('click', () => {
 });
 
 $('signout-btn').addEventListener('click', async () => {
-  if (unsubFlights)  { unsubFlights();  unsubFlights  = null; }
-  if (unsubAircraft) { unsubAircraft(); unsubAircraft = null; }
+  if (unsubFlights)      { unsubFlights();      unsubFlights      = null; }
+  if (unsubAircraft)     { unsubAircraft();     unsubAircraft     = null; }
+  if (unsubEndorsements) { unsubEndorsements(); unsubEndorsements = null; }
   await auth.signOut();
 });
 
@@ -175,6 +182,8 @@ auth.onAuthStateChanged(user => {
 
     subscribeToFlights();
     subscribeToAircraft();
+    subscribeToEndorsements();
+    loadUserCerts();
     navigate('dashboard');
   } else {
     $('app-screen').classList.add('hidden');
@@ -185,7 +194,10 @@ auth.onAuthStateChanged(user => {
     $('auth-screen').classList.add('active');
     allFlights  = [];
     allAircraft = [];
-    if (unsubAircraft) { unsubAircraft(); unsubAircraft = null; }
+    allEndorsements = [];
+    userCerts = { medical: null, bfr: null, pilotCert: null, cfiCurrency: null };
+    if (unsubAircraft)     { unsubAircraft();     unsubAircraft     = null; }
+    if (unsubEndorsements) { unsubEndorsements(); unsubEndorsements = null; }
   }
 });
 
@@ -243,7 +255,8 @@ function renderDashboard() {
   // Currency
   const today = new Date(); today.setHours(0,0,0,0);
   const d90 = new Date(today); d90.setDate(d90.getDate() - 90);
-  const d6mo = new Date(today); d6mo.setMonth(d6mo.getMonth() - 6);
+  // Approaches window: start of the month that is 6 months before today
+  const d6mo = new Date(today); d6mo.setMonth(d6mo.getMonth() - 6); d6mo.setDate(1);
   const iso90  = d90.toISOString().split('T')[0];
   const iso6mo = d6mo.toISOString().split('T')[0];
 
@@ -271,19 +284,29 @@ function renderDashboard() {
     if (ac.tailwheel) twLdg += ldg;
   });
 
+  const ldgBadge = ldg => ldg >= 3
+    ? `<span class="currency-badge current">CURRENT</span>`
+    : `<span class="currency-badge not-current">NOT CURRENT</span>`;
+
   let ldgHtml = '';
   combos.forEach(({ cls, cat, ldg }) => {
     ldgHtml += `<div class="currency-card">
-      <div class="currency-label">LANDINGS — ${esc(cls)} ${esc(cat.toUpperCase())}</div>
+      <div class="currency-card-header">
+        <div class="currency-label">LANDINGS — ${esc(cls)} ${esc(cat.toUpperCase())}</div>
+        ${ldgBadge(ldg)}
+      </div>
       <div class="currency-val">${ldg}</div>
-      <div class="currency-sub">last 90 days · since ${formatDate(iso90)}</div>
+      <div class="currency-sub">3 required · last 90 days · since ${formatDate(iso90)}</div>
     </div>`;
   });
   if (hasTailwheel) {
     ldgHtml += `<div class="currency-card">
-      <div class="currency-label">LANDINGS — TAILWHEEL</div>
+      <div class="currency-card-header">
+        <div class="currency-label">LANDINGS — TAILWHEEL</div>
+        ${ldgBadge(twLdg)}
+      </div>
       <div class="currency-val">${twLdg}</div>
-      <div class="currency-sub">last 90 days · since ${formatDate(iso90)}</div>
+      <div class="currency-sub">3 required · last 90 days · since ${formatDate(iso90)}</div>
     </div>`;
   }
   if (!ldgHtml) {
@@ -299,7 +322,10 @@ function renderDashboard() {
     .filter(f => f.date >= iso6mo)
     .reduce((a, f) => a + (+f.apprActual || 0) + (+f.apprSim || 0), 0);
   $('c-appr-6mo').textContent     = appr6mo;
-  $('c-appr-6mo-sub').textContent = `since ${formatDate(iso6mo)}`;
+  $('c-appr-6mo-sub').textContent = `6 required · since ${formatDate(iso6mo)}`;
+  const apprBadgeEl = $('c-appr-badge');
+  apprBadgeEl.textContent  = appr6mo >= 6 ? 'CURRENT' : 'NOT CURRENT';
+  apprBadgeEl.className    = `currency-badge ${appr6mo >= 6 ? 'current' : 'not-current'}`;
 
   // Recent flights — last 30 days
   const iso30 = (() => { const d = new Date(today); d.setDate(d.getDate() - 30); return d.toISOString().split('T')[0]; })();
@@ -818,8 +844,142 @@ $('ac-save-btn').addEventListener('click', async () => {
 // CHARTS
 // ============================================
 
-function renderCharts() {
-  if (allFlights.length === 0) return;
+// ---- Analytics filters ----
+
+const MS_IDS = ['tail','class','category','make','model','variant','type','chars'];
+
+function getMsVals(id) {
+  return [...document.querySelectorAll(`#ms-${id}-panel input[type=checkbox]:checked`)].map(cb => cb.value);
+}
+
+function updateMsBtn(id) {
+  const vals = getMsVals(id);
+  const btn  = $(`ms-${id}-btn`);
+  if (!vals.length) { btn.textContent = 'All'; return; }
+  const joined = vals.join(', ');
+  btn.textContent = joined.length > 18 ? `${vals.length} selected` : joined;
+}
+
+function closeMsPanels(exceptId) {
+  MS_IDS.forEach(id => {
+    if (id !== exceptId) $(`ms-${id}-panel`).classList.remove('af-ms-open');
+  });
+}
+
+MS_IDS.forEach(id => {
+  $(`ms-${id}-btn`).addEventListener('click', e => {
+    e.stopPropagation();
+    const panel = $(`ms-${id}-panel`);
+    const opening = !panel.classList.contains('af-ms-open');
+    closeMsPanels(id);
+    panel.classList.toggle('af-ms-open', opening);
+  });
+  $(`ms-${id}-panel`).addEventListener('change', () => {
+    updateMsBtn(id);
+    renderAnalytics();
+  });
+});
+
+document.addEventListener('click', () => closeMsPanels(null));
+
+function getAnalyticsFlights() {
+  const from     = $('af-from').value;
+  const to       = $('af-to').value;
+  const tails    = getMsVals('tail');
+  const classes  = getMsVals('class');
+  const cats     = getMsVals('category');
+  const makes    = getMsVals('make');
+  const models   = getMsVals('model');
+  const variants = getMsVals('variant');
+  const types    = getMsVals('type');
+  const chars    = getMsVals('chars');
+
+  const acMap = {};
+  allAircraft.forEach(ac => { acMap[ac.tail] = ac; });
+
+  return allFlights.filter(f => {
+    if (from && f.date < from) return false;
+    if (to   && f.date > to)   return false;
+    const ac = acMap[f.tail];
+    if (tails.length    && !tails.includes(f.tail))              return false;
+    if (classes.length  && (!ac || !classes.includes(ac.class))) return false;
+    if (cats.length     && (!ac || !cats.includes(ac.category))) return false;
+    if (makes.length    && (!ac || !makes.includes(ac.make)))    return false;
+    if (models.length   && (!ac || !models.includes(ac.model)))  return false;
+    if (variants.length && (!ac || !variants.includes(ac.variant))) return false;
+    if (types.length    && (!ac || !types.includes(ac.type)))    return false;
+    if (chars.length    && (!ac || !chars.every(c => ac[c])))    return false;
+    return true;
+  });
+}
+
+function populateAnalyticsFilters() {
+  function repopulate(id, vals) {
+    const panel   = $(`ms-${id}-panel`);
+    const checked = getMsVals(id);
+    panel.innerHTML = [...new Set(vals)].filter(Boolean).sort()
+      .map(v => `<label class="af-ms-opt"><input type="checkbox" value="${v}"${checked.includes(v) ? ' checked' : ''}> ${v}</label>`)
+      .join('');
+  }
+  repopulate('tail',    allFlights.map(f => f.tail));
+  repopulate('make',    allAircraft.map(ac => ac.make));
+  repopulate('model',   allAircraft.map(ac => ac.model));
+  repopulate('variant', allAircraft.map(ac => ac.variant));
+  repopulate('type',    allAircraft.map(ac => ac.type));
+}
+
+function renderAnalytics() {
+  populateAnalyticsFilters();
+  const flights = getAnalyticsFlights();
+  const total = allFlights.length;
+  $('af-count').textContent = flights.length < total ? `${flights.length} of ${total} flights` : `${total} flights`;
+  renderAnalyticsTable(flights);
+  renderCharts(flights);
+}
+
+function renderAnalyticsTable(flights) {
+  const grid = $('analytics-stats-grid');
+  const sum  = key => flights.reduce((a, f) => a + (+f[key] || 0), 0);
+  const STATS = [
+    { label: 'TOTAL',      val: sum('total').toFixed(1),        unit: 'hrs' },
+    { label: 'PIC',        val: sum('pic').toFixed(1),          unit: 'hrs' },
+    { label: 'SIC',        val: sum('sic').toFixed(1),          unit: 'hrs' },
+    { label: 'DUAL RECV',  val: sum('dualRecv').toFixed(1),     unit: 'hrs' },
+    { label: 'DUAL GIVEN', val: sum('dualGiven').toFixed(1),    unit: 'hrs' },
+    { label: 'DAY',        val: sum('dayTime').toFixed(1),      unit: 'hrs' },
+    { label: 'CROSS COUNTRY', val: sum('xc').toFixed(1),        unit: 'hrs' },
+    { label: 'NIGHT',      val: sum('night').toFixed(1),        unit: 'hrs' },
+    { label: 'INST ACT',   val: sum('instActual').toFixed(1),   unit: 'hrs' },
+    { label: 'INST SIM',   val: sum('instSim').toFixed(1),      unit: 'hrs' },
+    { label: 'APPR ACT',   val: Math.round(sum('apprActual')),  unit: ''    },
+    { label: 'APPR SIM',   val: Math.round(sum('apprSim')),     unit: ''    },
+    { label: 'DAY LDG',    val: Math.round(sum('ldgDay')),      unit: ''    },
+    { label: 'NIGHT LDG',  val: Math.round(sum('ldgNight')),    unit: ''    },
+    { label: 'FLIGHTS',    val: flights.length,                  unit: ''    },
+  ];
+  grid.innerHTML = STATS.map(s => `
+    <div class="analytics-stat-card">
+      <div class="asc-label">${s.label}</div>
+      <div class="asc-value">${s.val}${s.unit ? `<span class="asc-unit">${s.unit}</span>` : ''}</div>
+    </div>`).join('');
+}
+
+['af-from','af-to'].forEach(id => $(id).addEventListener('change', renderAnalytics));
+$('af-reset').addEventListener('click', () => {
+  $('af-from').value = '';
+  $('af-to').value   = '';
+  MS_IDS.forEach(id => {
+    document.querySelectorAll(`#ms-${id}-panel input[type=checkbox]`).forEach(cb => { cb.checked = false; });
+    updateMsBtn(id);
+  });
+  renderAnalytics();
+});
+
+function renderCharts(flights) {
+  if (!flights || !flights.length) {
+    ['monthly','cumulative','aircraft','daynight'].forEach(k => destroyChart(k));
+    return;
+  }
 
   const dark      = window.matchMedia('(prefers-color-scheme: dark)').matches;
   const textColor = dark ? '#a8c0e8' : '#3a4d7a';
@@ -827,88 +987,77 @@ function renderCharts() {
   const blue      = '#1a56db';
   const sky       = '#0ea5e9';
   const amber     = '#f59e0b';
-
   const axis = {
-    ticks: { color: textColor, font: { size: 11 } },
+    ticks: { color: textColor, font: { size: 10 } },
     grid:  { color: gridColor }
   };
+  const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-  // Monthly hours bar chart (last 24 months)
+  // Monthly hours bar
   const monthMap = {};
-  allFlights.forEach(f => {
+  flights.forEach(f => {
     const key = (f.date || '').slice(0, 7);
     if (key) monthMap[key] = (monthMap[key] || 0) + (+f.total || 0);
   });
   const months = Object.keys(monthMap).sort().slice(-24);
-  const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-
   destroyChart('monthly');
   charts.monthly = new Chart($('c-monthly'), {
     type: 'bar',
     data: {
-      labels: months.map(m => { const [y, mo] = m.split('-'); return `${MON[+mo-1]} ${y.slice(2)}`; }),
-      datasets: [{ data: months.map(m => +monthMap[m].toFixed(1)), backgroundColor: blue + 'cc', borderRadius: 4 }]
+      labels: months.map(m => { const [y, mo] = m.split('-'); return `${MON[+mo-1]} '${y.slice(2)}`; }),
+      datasets: [{ data: months.map(m => +monthMap[m].toFixed(1)), backgroundColor: blue + 'cc', borderRadius: 3 }]
     },
-    options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: axis, y: axis } }
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: axis, y: { ...axis, beginAtZero: true } } }
   });
 
-  // Cumulative hours line chart
-  const sorted = [...allFlights].sort((a, b) => a.date > b.date ? 1 : -1);
+  // Cumulative hours line
+  const sorted = [...flights].sort((a, b) => (a.date > b.date ? 1 : -1));
   let cum = 0;
   const cumData = sorted.map(f => { cum += +f.total || 0; return +cum.toFixed(1); });
-
   destroyChart('cumulative');
   charts.cumulative = new Chart($('c-cumulative'), {
     type: 'line',
     data: {
       labels: sorted.map(f => formatDate(f.date)),
-      datasets: [{
-        data: cumData, borderColor: sky, backgroundColor: sky + '22',
-        fill: true, tension: 0.3, pointRadius: 2
-      }]
+      datasets: [{ data: cumData, borderColor: sky, backgroundColor: sky + '22', fill: true, tension: 0.3, pointRadius: 1 }]
     },
     options: {
       responsive: true,
       plugins: { legend: { display: false } },
-      scales: { x: { ...axis, ticks: { ...axis.ticks, maxTicksLimit: 8 } }, y: axis }
+      scales: { x: { ...axis, ticks: { ...axis.ticks, maxTicksLimit: 7 } }, y: axis }
     }
   });
 
-  // Aircraft type doughnut
-  const acMap = {};
-  allFlights.forEach(f => { const t = f.acType || 'Other'; acMap[t] = (acMap[t] || 0) + (+f.total || 0); });
-  const acTypes  = Object.keys(acMap);
-  const palette  = [blue, sky, '#10b981', amber, '#a855f7', '#ec4899', '#ef4444'];
-
+  // Time by class doughnut
+  const acByTail = {};
+  allAircraft.forEach(ac => { acByTail[ac.tail] = ac; });
+  const clsMap = {};
+  flights.forEach(f => {
+    const ac  = acByTail[f.tail];
+    const key = ac?.class || f.makeModel?.split(' ')[0] || 'Unknown';
+    clsMap[key] = (clsMap[key] || 0) + (+f.total || 0);
+  });
+  const clsKeys = Object.keys(clsMap);
+  const palette = [blue, sky, '#10b981', amber, '#a855f7', '#ec4899', '#ef4444'];
   destroyChart('aircraft');
   charts.aircraft = new Chart($('c-aircraft'), {
     type: 'doughnut',
     data: {
-      labels: acTypes,
-      datasets: [{
-        data: acTypes.map(t => +acMap[t].toFixed(1)),
-        backgroundColor: acTypes.map((_, i) => palette[i % palette.length]),
-        borderWidth: 0
-      }]
+      labels: clsKeys,
+      datasets: [{ data: clsKeys.map(k => +clsMap[k].toFixed(1)), backgroundColor: clsKeys.map((_, i) => palette[i % palette.length]), borderWidth: 0 }]
     },
     options: { responsive: true, plugins: { legend: { labels: { color: textColor, font: { size: 11 } } } } }
   });
 
   // Day vs Night doughnut
-  const totalHrs = allFlights.reduce((a, f) => a + (+f.total || 0), 0);
-  const nightHrs = allFlights.reduce((a, f) => a + (+f.night || 0), 0);
-  const dayHrs   = Math.max(0, totalHrs - nightHrs);
-
+  const nightHrs = flights.reduce((a, f) => a + (+f.night || 0), 0);
+  const dayHrs   = Math.max(0, flights.reduce((a, f) => a + (+f.total || 0), 0) - nightHrs);
   destroyChart('daynight');
   charts.daynight = new Chart($('c-daynight'), {
     type: 'doughnut',
     data: {
       labels: ['Day', 'Night'],
-      datasets: [{
-        data: [+dayHrs.toFixed(1), +nightHrs.toFixed(1)],
-        backgroundColor: [amber, '#1e3a8a'],
-        borderWidth: 0
-      }]
+      datasets: [{ data: [+dayHrs.toFixed(1), +nightHrs.toFixed(1)], backgroundColor: [amber, '#1e3a8a'], borderWidth: 0 }]
     },
     options: { responsive: true, plugins: { legend: { labels: { color: textColor, font: { size: 11 } } } } }
   });
@@ -1181,6 +1330,489 @@ $('csv-import-btn').addEventListener('click', async () => {
     statusEl.innerHTML = summary;
     statusEl.classList.remove('hidden');
   }
+});
+
+// ============================================
+// CERTIFICATES & ENDORSEMENTS
+// ============================================
+
+// ---- Utilities ----
+
+function lastDayOfMonthPlusN(dateStr, months) {
+  if (!dateStr || !months) return '';
+  const [y, m] = dateStr.split('-').map(Number);
+  const dt = new Date(y, m - 1 + Number(months) + 1, 0);
+  return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+}
+
+function certStatus(expiryStr, todayStr) {
+  if (!expiryStr) return { label: 'NOT SET', cls: 'none' };
+  if (expiryStr < todayStr) return { label: 'EXPIRED', cls: 'expired' };
+  const d60 = new Date(todayStr); d60.setDate(d60.getDate() + 60);
+  if (expiryStr <= d60.toISOString().split('T')[0]) return { label: 'EXPIRING SOON', cls: 'expiring' };
+  return { label: 'CURRENT', cls: 'current' };
+}
+
+// ---- Firestore ----
+
+function subscribeToEndorsements() {
+  const q = db.collection('endorsements').where('uid', '==', currentUser.uid);
+  unsubEndorsements = q.onSnapshot(snap => {
+    allEndorsements = snap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    renderCertsPage();
+  }, err => console.error('Endorsements snapshot error:', err));
+}
+
+async function loadUserCerts() {
+  const doc = await db.collection('users').doc(currentUser.uid).get();
+  const data = doc.data() || {};
+  userCerts = {
+    medical:     data.medical     || null,
+    bfr:         data.bfr         || null,
+    pilotCert:   data.pilotCert   || null,
+    cfiCurrency: data.cfiCurrency || null,
+  };
+  renderCertsPage();
+}
+
+// ---- Render ----
+
+const PC_RATINGS = [
+  { id: 'instrument',  label: 'Instrument' },
+  { id: 'mel',         label: 'Multi-Engine Land' },
+  { id: 'mes',         label: 'Multi-Engine Sea' },
+  { id: 'ses',         label: 'Single-Engine Sea' },
+  { id: 'glider',      label: 'Glider' },
+  { id: 'helicopter',  label: 'Helicopter' },
+  { id: 'cfi',         label: 'CFI' },
+  { id: 'cfii',        label: 'CFII' },
+  { id: 'mei',         label: 'MEI' },
+];
+const INSTRUCTOR_RATINGS = new Set(['cfi', 'cfii', 'mei']);
+
+function updateSidebarCertNum() {
+  const el = $('pilot-cert-num');
+  if (!el) return;
+  const num = userCerts.pilotCert?.certNumber;
+  if (num) { el.textContent = `Cert # ${num}`; el.classList.remove('hidden'); }
+  else      { el.classList.add('hidden'); }
+}
+
+function renderCertsPage() {
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  // Pilot Certificate
+  const pc = userCerts.pilotCert;
+  if (pc && pc.type) {
+    $('pc-display').textContent = pc.type + ' Pilot';
+    if (pc.certNumber) {
+      $('pc-cert-num-display').textContent = `# ${pc.certNumber}`;
+      $('pc-cert-num-display').classList.remove('hidden');
+    } else {
+      $('pc-cert-num-display').classList.add('hidden');
+    }
+    const certLine = pc.checkrideDate
+      ? `Checkride: <strong>${formatDate(pc.checkrideDate)}</strong>`
+      : 'No checkride date on file.';
+    const ratingLines = (pc.ratings || []).map(r => {
+      const label = PC_RATINGS.find(x => x.id === r.id)?.label || r.id;
+      return `<div class="pc-rating-line">${label}${r.date ? ` &nbsp;·&nbsp; <strong>${formatDate(r.date)}</strong>` : ''}</div>`;
+    }).join('');
+    $('pc-dates').innerHTML = certLine + (ratingLines ? `<div class="pc-ratings-list">${ratingLines}</div>` : '');
+    const hasInstructor = (pc.ratings || []).some(r => INSTRUCTOR_RATINGS.has(r.id));
+    $('cfi-currency-card').classList.toggle('hidden', !hasInstructor);
+  } else {
+    $('pc-display').textContent = '—';
+    $('pc-dates').textContent   = 'No certificate on file.';
+    $('pc-cert-num-display').classList.add('hidden');
+    $('cfi-currency-card').classList.add('hidden');
+  }
+  updateSidebarCertNum();
+
+  // CFI Currency
+  const cfi = userCerts.cfiCurrency;
+  if (cfi && cfi.recentExperienceDate) {
+    const expiry = lastDayOfMonthPlusN(cfi.recentExperienceDate, 24);
+    const st = certStatus(expiry, todayStr);
+    $('cfi-status').textContent = st.label;
+    $('cfi-status').className   = `cert-badge ${st.cls}`;
+    $('cfi-dates').innerHTML =
+      `Recent Experience Completion: <strong>${formatDate(cfi.recentExperienceDate)}</strong> &nbsp;·&nbsp; Expires: <strong>${formatDate(expiry)}</strong>`;
+  } else {
+    $('cfi-status').textContent = 'NOT SET';
+    $('cfi-status').className   = 'cert-badge none';
+    $('cfi-dates').textContent  = 'No recent experience date on file.';
+  }
+
+  // Medical
+  const med = userCerts.medical;
+  if (med && med.issueDate && (med.durationMonths || med.class === 'BasicMed')) {
+    $('med-class-display').textContent = med.class ? `${med.class} Class` : '';
+    let datesHtml = `Issued: <strong>${formatDate(med.issueDate)}</strong>`;
+    let primaryExpiry, primarySt;
+
+    if (med.class === 'BasicMed') {
+      primaryExpiry = lastDayOfMonthPlusN(med.issueDate, 48);
+      primarySt     = certStatus(primaryExpiry, todayStr);
+      datesHtml += `<div class="med-date-line">Certificate expires: <strong>${formatDate(primaryExpiry)}</strong></div>`;
+      if (med.courseDate) {
+        const courseExpiry = lastDayOfMonthPlusN(med.courseDate, 24);
+        const cst = certStatus(courseExpiry, todayStr);
+        datesHtml += `<div class="med-date-line">Course completed: <strong>${formatDate(med.courseDate)}</strong> &nbsp;·&nbsp; expires: <strong>${formatDate(courseExpiry)}</strong> <span class="cert-badge ${cst.cls}" style="font-size:7px;padding:2px 5px">${cst.label}</span></div>`;
+      } else {
+        datesHtml += `<div class="med-date-line" style="color:var(--amber)">Course completion date not on file</div>`;
+      }
+    } else if (med.class === '1st' || med.class === '2nd') {
+      primaryExpiry = lastDayOfMonthPlusN(med.issueDate, med.durationMonths);
+      primarySt     = certStatus(primaryExpiry, todayStr);
+      datesHtml += `<div class="med-date-line">As ${med.class} Class: expires <strong>${formatDate(primaryExpiry)}</strong></div>`;
+      if (med.thirdClassMonths) {
+        const thirdExpiry = lastDayOfMonthPlusN(med.issueDate, +med.thirdClassMonths);
+        const tst = certStatus(thirdExpiry, todayStr);
+        datesHtml += `<div class="med-date-line">As 3rd Class: expires <strong>${formatDate(thirdExpiry)}</strong> <span class="cert-badge ${tst.cls}" style="font-size:7px;padding:2px 5px">${tst.label}</span></div>`;
+      }
+    } else {
+      primaryExpiry = lastDayOfMonthPlusN(med.issueDate, med.durationMonths);
+      primarySt     = certStatus(primaryExpiry, todayStr);
+      datesHtml += `<div class="med-date-line">Expires: <strong>${formatDate(primaryExpiry)}</strong></div>`;
+    }
+
+    $('med-status').textContent = primarySt.label;
+    $('med-status').className   = `cert-badge ${primarySt.cls}`;
+    $('med-dates').innerHTML    = datesHtml;
+  } else {
+    $('med-status').textContent = 'NOT SET';
+    $('med-status').className   = 'cert-badge none';
+    $('med-class-display').textContent = '—';
+    $('med-dates').textContent  = 'No medical certificate on file.';
+  }
+
+  // BFR
+  const bfr = userCerts.bfr;
+  if (bfr && bfr.completionDate) {
+    const expiry = lastDayOfMonthPlusN(bfr.completionDate, 24);
+    const st = certStatus(expiry, todayStr);
+    $('bfr-status').textContent = st.label;
+    $('bfr-status').className   = `cert-badge ${st.cls}`;
+    $('bfr-dates').innerHTML =
+      `Completed: <strong>${formatDate(bfr.completionDate)}</strong> &nbsp;·&nbsp; Expires: <strong>${formatDate(expiry)}</strong>`;
+  } else {
+    $('bfr-status').textContent = 'NOT SET';
+    $('bfr-status').className   = 'cert-badge none';
+    $('bfr-dates').textContent  = 'No flight review on file.';
+  }
+
+  // Endorsements
+  const el = $('endorsement-list');
+  if (!allEndorsements.length) {
+    el.innerHTML = '<div class="empty-msg">No endorsements on file.</div>';
+    return;
+  }
+  el.innerHTML = allEndorsements.map(e => {
+    const expiry = e.durationMonths ? lastDayOfMonthPlusN(e.date, e.durationMonths) : null;
+    const st = expiry ? certStatus(expiry, todayStr) : { label: 'PERMANENT', cls: 'permanent' };
+    return `<div class="endorsement-item">
+      <div class="end-info">
+        <div class="end-name">${esc(e.name)}</div>
+        <div class="end-dates">Issued: ${formatDate(e.date)}${expiry ? ` &nbsp;·&nbsp; Expires: ${formatDate(expiry)}` : ''}</div>
+        ${e.notes ? `<div class="end-notes">${esc(e.notes)}</div>` : ''}
+      </div>
+      <div class="end-right">
+        <span class="cert-badge ${st.cls}">${st.label}</span>
+        <div class="end-actions">
+          <button class="btn-text" data-end-edit="${e.id}">Edit</button>
+          <button class="btn-text danger" data-end-delete="${e.id}">Delete</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  $('endorsement-list').querySelectorAll('[data-end-edit]').forEach(btn =>
+    btn.addEventListener('click', () => startEditEndorsement(btn.dataset.endEdit))
+  );
+  $('endorsement-list').querySelectorAll('[data-end-delete]').forEach(btn =>
+    btn.addEventListener('click', () => deleteEndorsement(btn.dataset.endDelete))
+  );
+}
+
+// ---- Pilot Certificate ----
+
+$('edit-pilot-cert-btn').addEventListener('click', () => {
+  const pc = userCerts.pilotCert || {};
+  $('pc-type').value           = pc.type          || '';
+  $('pc-checkride-date').value = pc.checkrideDate  || '';
+  $('pc-cert-number').value    = pc.certNumber     || '';
+  PC_RATINGS.forEach(r => {
+    const saved = (pc.ratings || []).find(x => x.id === r.id);
+    $(`pc-r-${r.id}`).checked = !!saved;
+    const dateEl = $(`pc-d-${r.id}`);
+    dateEl.value = saved?.date || '';
+    dateEl.classList.toggle('hidden', !saved);
+  });
+  $('pc-form-err').classList.add('hidden');
+  $('pilot-cert-form').classList.remove('hidden');
+  $('edit-pilot-cert-btn').classList.add('hidden');
+});
+
+PC_RATINGS.forEach(r => {
+  $(`pc-r-${r.id}`).addEventListener('change', () => {
+    const dateEl = $(`pc-d-${r.id}`);
+    const checked = $(`pc-r-${r.id}`).checked;
+    dateEl.classList.toggle('hidden', !checked);
+    if (!checked) dateEl.value = '';
+  });
+});
+
+$('pc-cancel-btn').addEventListener('click', () => {
+  $('pilot-cert-form').classList.add('hidden');
+  $('edit-pilot-cert-btn').classList.remove('hidden');
+});
+
+$('pc-save-btn').addEventListener('click', async () => {
+  $('pc-form-err').classList.add('hidden');
+  $('pc-save-btn').disabled = true;
+  const ratings = PC_RATINGS
+    .filter(r => $(`pc-r-${r.id}`).checked)
+    .map(r => ({ id: r.id, date: $(`pc-d-${r.id}`).value }));
+  const pilotCert = {
+    type:          $('pc-type').value,
+    checkrideDate: $('pc-checkride-date').value,
+    certNumber:    $('pc-cert-number').value.trim(),
+    ratings,
+  };
+  try {
+    await db.collection('users').doc(currentUser.uid).set({ pilotCert }, { merge: true });
+    userCerts.pilotCert = pilotCert;
+    renderCertsPage();
+    $('pilot-cert-form').classList.add('hidden');
+    $('edit-pilot-cert-btn').classList.remove('hidden');
+  } catch(e) {
+    $('pc-form-err').textContent = 'Error saving. Please try again.';
+    $('pc-form-err').classList.remove('hidden');
+    console.error(e);
+  }
+  $('pc-save-btn').disabled = false;
+});
+
+// ---- CFI Currency ----
+
+$('edit-cfi-btn').addEventListener('click', () => {
+  $('cfi-recent-date').value = userCerts.cfiCurrency?.recentExperienceDate || '';
+  $('cfi-form-err').classList.add('hidden');
+  $('cfi-form').classList.remove('hidden');
+  $('edit-cfi-btn').classList.add('hidden');
+});
+
+$('cfi-cancel-btn').addEventListener('click', () => {
+  $('cfi-form').classList.add('hidden');
+  $('edit-cfi-btn').classList.remove('hidden');
+});
+
+$('cfi-save-btn').addEventListener('click', async () => {
+  const recentExperienceDate = $('cfi-recent-date').value;
+  if (!recentExperienceDate) {
+    $('cfi-form-err').textContent = 'Date is required.';
+    $('cfi-form-err').classList.remove('hidden');
+    return;
+  }
+  $('cfi-form-err').classList.add('hidden');
+  $('cfi-save-btn').disabled = true;
+  try {
+    const cfiCurrency = { recentExperienceDate };
+    await db.collection('users').doc(currentUser.uid).set({ cfiCurrency }, { merge: true });
+    userCerts.cfiCurrency = cfiCurrency;
+    renderCertsPage();
+    $('cfi-form').classList.add('hidden');
+    $('edit-cfi-btn').classList.remove('hidden');
+  } catch(e) {
+    $('cfi-form-err').textContent = 'Error saving. Please try again.';
+    $('cfi-form-err').classList.remove('hidden');
+    console.error(e);
+  }
+  $('cfi-save-btn').disabled = false;
+});
+
+// ---- Medical ----
+
+function medClassToggle(cls) {
+  const is12  = cls === '1st' || cls === '2nd';
+  const isBM  = cls === 'BasicMed';
+  $('med-duration-wrap').classList.toggle('hidden', isBM);
+  $('med-third-wrap').classList.toggle('hidden', !is12);
+  $('med-course-wrap').classList.toggle('hidden', !isBM);
+  // Label and hint by class
+  const labels = { '1st': 'DURATION AS 1ST CLASS (MONTHS)', '2nd': 'DURATION AS 2ND CLASS (MONTHS)', '3rd': 'DURATION (MONTHS)' };
+  const hints  = { '1st': '6 months (age 40+) · 12 months (under 40)', '2nd': '24 months (any age)', '3rd': '24 months (age 40+) · 60 months (under 40)' };
+  if (labels[cls]) { $('med-duration-label').textContent = labels[cls] + ' *'; $('med-duration-hint').textContent = hints[cls]; }
+  // Auto-fill defaults
+  const defaults = { '1st': 12, '2nd': 24, '3rd': 60 };
+  if (defaults[cls] && !$('med-duration').value) $('med-duration').value = defaults[cls];
+}
+
+$('med-class').addEventListener('change', () => medClassToggle($('med-class').value));
+
+$('edit-medical-btn').addEventListener('click', () => {
+  const med = userCerts.medical || {};
+  $('med-class').value        = med.class           || '';
+  $('med-issue-date').value   = med.issueDate        || '';
+  $('med-duration').value     = med.durationMonths   || '';
+  $('med-third-months').value = med.thirdClassMonths || '60';
+  $('med-course-date').value  = med.courseDate       || '';
+  medClassToggle(med.class || '');
+  $('med-form-err').classList.add('hidden');
+  $('medical-form').classList.remove('hidden');
+  $('edit-medical-btn').classList.add('hidden');
+});
+
+$('med-cancel-btn').addEventListener('click', () => {
+  $('medical-form').classList.add('hidden');
+  $('edit-medical-btn').classList.remove('hidden');
+});
+
+$('med-save-btn').addEventListener('click', async () => {
+  const cls      = $('med-class').value;
+  const issueDate = $('med-issue-date').value;
+  const isBM     = cls === 'BasicMed';
+  const is12     = cls === '1st' || cls === '2nd';
+
+  const showErr = msg => { $('med-form-err').textContent = msg; $('med-form-err').classList.remove('hidden'); };
+  if (!issueDate) { showErr('Issue date is required.'); return; }
+  if (!isBM && !parseInt($('med-duration').value)) { showErr('Duration is required.'); return; }
+  if (isBM && !$('med-course-date').value) { showErr('Course completion date is required for BasicMed.'); return; }
+
+  $('med-form-err').classList.add('hidden');
+  $('med-save-btn').disabled = true;
+  try {
+    const medical = {
+      class:            cls,
+      issueDate,
+      durationMonths:   isBM ? 48 : (parseInt($('med-duration').value) || null),
+      thirdClassMonths: is12 ? parseInt($('med-third-months').value) : null,
+      courseDate:       isBM ? $('med-course-date').value : null,
+    };
+    await db.collection('users').doc(currentUser.uid).set({ medical }, { merge: true });
+    userCerts.medical = medical;
+    renderCertsPage();
+    $('medical-form').classList.add('hidden');
+    $('edit-medical-btn').classList.remove('hidden');
+  } catch(e) {
+    $('med-form-err').textContent = 'Error saving. Please try again.';
+    $('med-form-err').classList.remove('hidden');
+    console.error(e);
+  }
+  $('med-save-btn').disabled = false;
+});
+
+// ---- BFR ----
+
+$('edit-bfr-btn').addEventListener('click', () => {
+  if (userCerts.bfr) $('bfr-date').value = userCerts.bfr.completionDate || '';
+  $('bfr-form-err').classList.add('hidden');
+  $('bfr-form').classList.remove('hidden');
+  $('edit-bfr-btn').classList.add('hidden');
+});
+
+$('bfr-cancel-btn').addEventListener('click', () => {
+  $('bfr-form').classList.add('hidden');
+  $('edit-bfr-btn').classList.remove('hidden');
+});
+
+$('bfr-save-btn').addEventListener('click', async () => {
+  const completionDate = $('bfr-date').value;
+  if (!completionDate) { $('bfr-form-err').textContent = 'Completion date is required.'; $('bfr-form-err').classList.remove('hidden'); return; }
+  $('bfr-form-err').classList.add('hidden');
+  $('bfr-save-btn').disabled = true;
+  try {
+    const bfr = { completionDate };
+    await db.collection('users').doc(currentUser.uid).set({ bfr }, { merge: true });
+    userCerts.bfr = bfr;
+    renderCertsPage();
+    $('bfr-form').classList.add('hidden');
+    $('edit-bfr-btn').classList.remove('hidden');
+  } catch(e) {
+    $('bfr-form-err').textContent = 'Error saving. Please try again.';
+    $('bfr-form-err').classList.remove('hidden');
+    console.error(e);
+  }
+  $('bfr-save-btn').disabled = false;
+});
+
+// ---- Endorsements ----
+
+$('add-endorsement-btn').addEventListener('click', () => {
+  editingEndId = null;
+  $('end-edit-id').value    = '';
+  $('end-form-heading').textContent = 'ADD ENDORSEMENT';
+  $('end-save-btn').textContent     = 'SAVE ENDORSEMENT';
+  $('end-name').value = ''; $('end-date').value = '';
+  $('end-duration').value = ''; $('end-notes').value = '';
+  $('end-form-err').classList.add('hidden');
+  $('endorsement-form-wrap').classList.remove('hidden');
+  $('add-endorsement-btn').classList.add('hidden');
+});
+
+$('end-cancel-btn').addEventListener('click', () => {
+  $('endorsement-form-wrap').classList.add('hidden');
+  $('add-endorsement-btn').classList.remove('hidden');
+  editingEndId = null;
+});
+
+function startEditEndorsement(id) {
+  const e = allEndorsements.find(x => x.id === id);
+  if (!e) return;
+  editingEndId = id;
+  $('end-edit-id').value    = id;
+  $('end-form-heading').textContent = 'EDIT ENDORSEMENT';
+  $('end-save-btn').textContent     = 'UPDATE ENDORSEMENT';
+  $('end-name').value     = e.name          || '';
+  $('end-date').value     = e.date          || '';
+  $('end-duration').value = e.durationMonths || '';
+  $('end-notes').value    = e.notes         || '';
+  $('end-form-err').classList.add('hidden');
+  $('endorsement-form-wrap').classList.remove('hidden');
+  $('add-endorsement-btn').classList.add('hidden');
+  $('endorsement-form-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+async function deleteEndorsement(id) {
+  if (!confirm('Delete this endorsement?')) return;
+  await db.collection('endorsements').doc(id).delete();
+}
+
+$('end-save-btn').addEventListener('click', async () => {
+  const name = $('end-name').value.trim();
+  const date = $('end-date').value;
+  if (!name) { $('end-form-err').textContent = 'Name is required.'; $('end-form-err').classList.remove('hidden'); return; }
+  if (!date) { $('end-form-err').textContent = 'Date is required.'; $('end-form-err').classList.remove('hidden'); return; }
+  $('end-form-err').classList.add('hidden');
+  $('end-save-btn').disabled = true;
+
+  const data = {
+    uid:           currentUser.uid,
+    name,
+    date,
+    durationMonths: parseInt($('end-duration').value) || null,
+    notes:          $('end-notes').value.trim() || '',
+  };
+
+  try {
+    if (editingEndId) {
+      await db.collection('endorsements').doc(editingEndId).update(data);
+    } else {
+      data.createdAt = new Date().toISOString();
+      await db.collection('endorsements').add(data);
+    }
+    $('endorsement-form-wrap').classList.add('hidden');
+    $('add-endorsement-btn').classList.remove('hidden');
+    editingEndId = null;
+  } catch(e) {
+    $('end-form-err').textContent = 'Error saving. Please try again.';
+    $('end-form-err').classList.remove('hidden');
+    console.error(e);
+  }
+  $('end-save-btn').disabled = false;
 });
 
 // ============================================
