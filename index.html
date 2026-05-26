@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.json" />
   <title>FlightLog</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -19,12 +19,13 @@
     <div class="auth-bg"><div class="runway-lights"></div><div class="horizon"></div></div>
     <div class="auth-card">
       <div class="auth-logo">
-        <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
-          <polygon points="26,4 48,42 4,42" stroke="currentColor" stroke-width="2" fill="none"/>
-          <polygon points="26,16 38,36 14,36" stroke="currentColor" stroke-width="1" fill="none" opacity="0.4"/>
-          <circle cx="26" cy="28" r="3.5" fill="currentColor"/>
-          <line x1="26" y1="31.5" x2="26" y2="42" stroke="currentColor" stroke-width="1.5"/>
-          <line x1="17" y1="42" x2="35" y2="42" stroke="currentColor" stroke-width="2"/>
+        <svg width="64" height="64" viewBox="0 0 100 100" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <g transform="translate(50,50)">
+            <path d="M-3,2 C-7,-6 -6,-24 -2,-40 C-1,-43 1,-43 2,-40 C6,-24 7,-6 3,2 Z"/>
+            <path d="M-3,2 C-7,-6 -6,-24 -2,-40 C-1,-43 1,-43 2,-40 C6,-24 7,-6 3,2 Z" transform="rotate(120)"/>
+            <path d="M-3,2 C-7,-6 -6,-24 -2,-40 C-1,-43 1,-43 2,-40 C6,-24 7,-6 3,2 Z" transform="rotate(240)"/>
+            <circle r="6"/>
+          </g>
         </svg>
       </div>
       <h1 class="auth-title">FLIGHTLOG</h1>
@@ -43,12 +44,13 @@
     <div class="auth-bg"><div class="runway-lights"></div><div class="horizon"></div></div>
     <div class="auth-card">
       <div class="auth-logo">
-        <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
-          <polygon points="26,4 48,42 4,42" stroke="currentColor" stroke-width="2" fill="none"/>
-          <polygon points="26,16 38,36 14,36" stroke="currentColor" stroke-width="1" fill="none" opacity="0.4"/>
-          <circle cx="26" cy="28" r="3.5" fill="currentColor"/>
-          <line x1="26" y1="31.5" x2="26" y2="42" stroke="currentColor" stroke-width="1.5"/>
-          <line x1="17" y1="42" x2="35" y2="42" stroke="currentColor" stroke-width="2"/>
+        <svg width="64" height="64" viewBox="0 0 100 100" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <g transform="translate(50,50)">
+            <path d="M-3,2 C-7,-6 -6,-24 -2,-40 C-1,-43 1,-43 2,-40 C6,-24 7,-6 3,2 Z"/>
+            <path d="M-3,2 C-7,-6 -6,-24 -2,-40 C-1,-43 1,-43 2,-40 C6,-24 7,-6 3,2 Z" transform="rotate(120)"/>
+            <path d="M-3,2 C-7,-6 -6,-24 -2,-40 C-1,-43 1,-43 2,-40 C6,-24 7,-6 3,2 Z" transform="rotate(240)"/>
+            <circle r="6"/>
+          </g>
         </svg>
       </div>
       <h1 class="auth-title">FLIGHTLOG</h1>
@@ -66,7 +68,7 @@
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-top">
         <div class="sidebar-brand">
-          <svg width="22" height="22" viewBox="0 0 52 52" fill="none"><polygon points="26,4 48,42 4,42" stroke="currentColor" stroke-width="2.5" fill="none"/><circle cx="26" cy="28" r="3.5" fill="currentColor"/></svg>
+          <svg width="22" height="22" viewBox="0 0 100 100" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><g transform="translate(50,50)"><path d="M-3,2 C-7,-6 -6,-24 -2,-40 C-1,-43 1,-43 2,-40 C6,-24 7,-6 3,2 Z"/><path d="M-3,2 C-7,-6 -6,-24 -2,-40 C-1,-43 1,-43 2,-40 C6,-24 7,-6 3,2 Z" transform="rotate(120)"/><path d="M-3,2 C-7,-6 -6,-24 -2,-40 C-1,-43 1,-43 2,-40 C6,-24 7,-6 3,2 Z" transform="rotate(240)"/><circle r="6"/></g></svg>
           <span>FLIGHTLOG</span>
         </div>
         <button class="sidebar-close" id="sidebar-close">✕</button>
@@ -86,6 +88,7 @@
         <a class="nav-item" data-page="charts"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Analytics</a>
         <a class="nav-item" data-page="aircraft"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>Aircraft</a>
         <a class="nav-item" data-page="certs"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z"/></svg>Certs</a>
+        <a class="nav-item" data-page="reports"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>Reports</a>
       </nav>
       <button class="btn-signout" id="signout-btn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sign Out</button>
     </aside>
@@ -98,6 +101,45 @@
       </header>
 
       <section class="page active" id="page-dashboard">
+        <svg class="db-compass" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <!-- Outer ring -->
+          <circle cx="200" cy="200" r="190" stroke="currentColor" stroke-width="1.5" opacity="0.6"/>
+          <circle cx="200" cy="200" r="178" stroke="currentColor" stroke-width="0.5" opacity="0.4"/>
+          <!-- Tick marks every 10 degrees -->
+          <g stroke="currentColor" stroke-width="1">
+            <line x1="200" y1="12" x2="200" y2="26"/><line x1="200" y1="374" x2="200" y2="388"/>
+            <line x1="388" y1="200" x2="374" y2="200"/><line x1="12" y1="200" x2="26" y2="200"/>
+            <line x1="329.3" y1="70.7" x2="319.6" y2="80.4"/><line x1="70.7" y1="329.3" x2="80.4" y2="319.6"/>
+            <line x1="329.3" y1="329.3" x2="319.6" y2="319.6"/><line x1="70.7" y1="70.7" x2="80.4" y2="80.4"/>
+            <line x1="294.6" y1="38.5" x2="289" y2="51.3" stroke-width="0.6"/>
+            <line x1="361.5" y1="105.4" x2="348.7" y2="111" stroke-width="0.6"/>
+            <line x1="361.5" y1="294.6" x2="348.7" y2="289" stroke-width="0.6"/>
+            <line x1="294.6" y1="361.5" x2="289" y2="348.7" stroke-width="0.6"/>
+            <line x1="105.4" y1="361.5" x2="111" y2="348.7" stroke-width="0.6"/>
+            <line x1="38.5" y1="294.6" x2="51.3" y2="289" stroke-width="0.6"/>
+            <line x1="38.5" y1="105.4" x2="51.3" y2="111" stroke-width="0.6"/>
+            <line x1="105.4" y1="38.5" x2="111" y2="51.3" stroke-width="0.6"/>
+          </g>
+          <!-- Cardinal direction labels -->
+          <text x="200" y="58" text-anchor="middle" dominant-baseline="middle" font-family="'Rajdhani',sans-serif" font-size="22" font-weight="700" fill="currentColor">N</text>
+          <text x="200" y="350" text-anchor="middle" dominant-baseline="middle" font-family="'Rajdhani',sans-serif" font-size="18" font-weight="600" fill="currentColor">S</text>
+          <text x="350" y="202" text-anchor="middle" dominant-baseline="middle" font-family="'Rajdhani',sans-serif" font-size="18" font-weight="600" fill="currentColor">E</text>
+          <text x="50" y="202" text-anchor="middle" dominant-baseline="middle" font-family="'Rajdhani',sans-serif" font-size="18" font-weight="600" fill="currentColor">W</text>
+          <!-- Intercardinal labels -->
+          <text x="318" y="90" text-anchor="middle" dominant-baseline="middle" font-family="'Rajdhani',sans-serif" font-size="12" font-weight="500" fill="currentColor" opacity="0.7">NE</text>
+          <text x="318" y="316" text-anchor="middle" dominant-baseline="middle" font-family="'Rajdhani',sans-serif" font-size="12" font-weight="500" fill="currentColor" opacity="0.7">SE</text>
+          <text x="84" y="316" text-anchor="middle" dominant-baseline="middle" font-family="'Rajdhani',sans-serif" font-size="12" font-weight="500" fill="currentColor" opacity="0.7">SW</text>
+          <text x="84" y="90" text-anchor="middle" dominant-baseline="middle" font-family="'Rajdhani',sans-serif" font-size="12" font-weight="500" fill="currentColor" opacity="0.7">NW</text>
+          <!-- North needle (filled) -->
+          <polygon points="200,75 207,200 200,185 193,200" fill="currentColor" opacity="0.9"/>
+          <!-- South needle (outline) -->
+          <polygon points="200,325 207,200 200,215 193,200" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.6"/>
+          <!-- Center dot -->
+          <circle cx="200" cy="200" r="6" fill="currentColor" opacity="0.8"/>
+          <circle cx="200" cy="200" r="3" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.5"/>
+          <!-- Degree ring inner -->
+          <circle cx="200" cy="200" r="100" stroke="currentColor" stroke-width="0.5" opacity="0.2"/>
+        </svg>
         <div class="stats-grid">
           <div class="stat-card highlight"><div class="stat-label">TOTAL TIME</div><div class="stat-val" id="s-total">0.0</div><div class="stat-unit">hours</div></div>
           <div class="stat-card"><div class="stat-label">PIC TIME</div><div class="stat-val" id="s-pic">0.0</div><div class="stat-unit">hours</div></div>
@@ -243,6 +285,13 @@
 
         <!-- ── Filter bar ── -->
         <div class="analytics-filter-bar">
+          <div class="af-quick-filters">
+            <button class="af-quick-btn" data-days="30">Last 30 Days</button>
+            <button class="af-quick-btn" data-days="60">Last 60 Days</button>
+            <button class="af-quick-btn" data-days="90">Last 90 Days</button>
+            <button class="af-quick-btn" data-months="6">Last 6 Months</button>
+            <button class="af-quick-btn" data-months="12">Last 12 Months</button>
+          </div>
           <div class="af-field"><label>FROM</label><input type="date" id="af-from"/></div>
           <div class="af-field"><label>TO</label><input type="date" id="af-to"/></div>
           <div class="af-field"><label>TAIL</label>
@@ -580,6 +629,44 @@
         <div id="endorsement-list">
           <div class="empty-msg">No endorsements on file.</div>
         </div>
+
+      </section>
+
+      <!-- ── Reports ── -->
+      <section class="page hidden" id="page-reports">
+
+        <!-- Insurance Report -->
+        <div class="section-row">
+          <h3 class="section-heading">INSURANCE REPORT</h3>
+          <button class="btn-sm-outline" onclick="window.print()">Print / Save PDF</button>
+        </div>
+        <div class="report-card" id="report-insurance">
+          <table class="report-table" id="rpt-ins-cat-table">
+            <thead>
+              <tr>
+                <th style="text-align:left">CATEGORY</th>
+                <th>TOTAL TIME</th>
+                <th>LAST 12 MONTHS</th>
+              </tr>
+            </thead>
+            <tbody id="rpt-ins-cat-body"></tbody>
+          </table>
+          <div class="report-divider" style="margin-top:16px"></div>
+          <div class="report-table-wrap">
+            <div class="report-table-title">TIME BY MAKE &amp; MODEL</div>
+            <table class="report-table" id="rpt-ins-table">
+              <thead><tr><th>MAKE &amp; MODEL</th><th>TOTAL</th><th>LAST 12 MONTHS</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- FAA Form 8710 -->
+        <div class="section-row" style="margin-top:12px">
+          <h3 class="section-heading">FAA FORM 8710 — FLIGHT EXPERIENCE</h3>
+          <button class="btn-sm-outline" onclick="window.print()">Print / Save PDF</button>
+        </div>
+        <div id="rpt-8710-wrap"></div>
 
       </section>
 
