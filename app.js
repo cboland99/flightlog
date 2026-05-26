@@ -18,7 +18,10 @@ let unsubAircraft     = null;
 let allEndorsements   = [];
 let editingEndId      = null;
 let unsubEndorsements = null;
-let userCerts         = { medical: null, bfr: null, pilotCert: null, cfiCurrency: null };
+let allCertificates   = [];
+let editingCertId     = null;
+let unsubCertificates = null;
+let userCerts         = { medical: null, bfr: null, cfiCurrency: null };
 
 // ---- DOM HELPER ----
 const $ = id => document.getElementById(id);
@@ -185,6 +188,7 @@ auth.onAuthStateChanged(user => {
     subscribeToFlights();
     subscribeToAircraft();
     subscribeToEndorsements();
+    subscribeToCertificates();
     loadUserCerts();
     navigate('dashboard');
   } else {
@@ -194,12 +198,15 @@ auth.onAuthStateChanged(user => {
     $('register-screen').classList.remove('active');
     $('auth-screen').classList.remove('hidden');
     $('auth-screen').classList.add('active');
-    allFlights  = [];
-    allAircraft = [];
+    allFlights      = [];
+    allAircraft     = [];
     allEndorsements = [];
-    userCerts = { medical: null, bfr: null, pilotCert: null, cfiCurrency: null };
+    allCertificates = [];
+    userCerts = { medical: null, bfr: null, cfiCurrency: null };
+    if (unsubFlights)      { unsubFlights();      unsubFlights      = null; }
     if (unsubAircraft)     { unsubAircraft();     unsubAircraft     = null; }
     if (unsubEndorsements) { unsubEndorsements(); unsubEndorsements = null; }
+    if (unsubCertificates) { unsubCertificates(); unsubCertificates = null; }
   }
 });
 
@@ -1543,26 +1550,90 @@ async function loadUserCerts() {
   userCerts = {
     medical:     data.medical     || null,
     bfr:         data.bfr         || null,
-    pilotCert:   data.pilotCert   || null,
     cfiCurrency: data.cfiCurrency || null,
   };
   renderCertsPage();
 }
 
+function subscribeToCertificates() {
+  const q = db.collection('certificates').where('uid', '==', currentUser.uid);
+  unsubCertificates = q.onSnapshot(snap => {
+    allCertificates = snap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => (a.type || '').localeCompare(b.type || ''));
+    renderCertsPage();
+  }, err => console.error('Certificates snapshot error:', err));
+}
+
 // ---- Render ----
 
-const PC_RATINGS = [
-  { id: 'instrument',  label: 'Instrument' },
-  { id: 'mel',         label: 'Multi-Engine Land' },
-  { id: 'mes',         label: 'Multi-Engine Sea' },
-  { id: 'ses',         label: 'Single-Engine Sea' },
-  { id: 'glider',      label: 'Glider' },
-  { id: 'helicopter',  label: 'Helicopter' },
-  { id: 'cfi',         label: 'CFI' },
-  { id: 'cfii',        label: 'CFII' },
-  { id: 'mei',         label: 'MEI' },
-];
-const INSTRUCTOR_RATINGS = new Set(['cfi', 'cfii', 'mei']);
+const CERT_TYPE_RATINGS = {
+  'Student Pilot': [],
+  'Recreational Pilot': [
+    { id: 'asel', label: 'Airplane Single Engine Land' },
+    { id: 'ases', label: 'Airplane Single Engine Sea' },
+  ],
+  'Sport Pilot': [
+    { id: 'asel',             label: 'Airplane Single Engine Land' },
+    { id: 'ases',             label: 'Airplane Single Engine Sea' },
+    { id: 'helicopter',       label: 'Helicopter' },
+    { id: 'gyroplane',        label: 'Gyroplane' },
+    { id: 'glider',           label: 'Glider' },
+    { id: 'balloon',          label: 'Lighter Than Air (Balloon)' },
+    { id: 'powered_parachute',label: 'Powered Parachute' },
+    { id: 'weight_shift',     label: 'Weight-Shift-Control' },
+  ],
+  'Private Pilot': [
+    { id: 'asel',                   label: 'Airplane Single Engine Land' },
+    { id: 'amel',                   label: 'Airplane Multi-Engine Land' },
+    { id: 'ases',                   label: 'Airplane Single Engine Sea' },
+    { id: 'ames',                   label: 'Airplane Multi-Engine Sea' },
+    { id: 'helicopter',             label: 'Helicopter' },
+    { id: 'gyroplane',              label: 'Gyroplane' },
+    { id: 'glider',                 label: 'Glider' },
+    { id: 'balloon',                label: 'Lighter Than Air (Balloon)' },
+    { id: 'airship',                label: 'Lighter Than Air (Airship)' },
+    { id: 'instrument_airplane',    label: 'Instrument Airplane' },
+    { id: 'instrument_helicopter',  label: 'Instrument Helicopter' },
+    { id: 'instrument_powered_lift',label: 'Instrument Powered Lift' },
+  ],
+  'Commercial Pilot': [
+    { id: 'asel',                   label: 'Airplane Single Engine Land' },
+    { id: 'amel',                   label: 'Airplane Multi-Engine Land' },
+    { id: 'ases',                   label: 'Airplane Single Engine Sea' },
+    { id: 'ames',                   label: 'Airplane Multi-Engine Sea' },
+    { id: 'helicopter',             label: 'Helicopter' },
+    { id: 'gyroplane',              label: 'Gyroplane' },
+    { id: 'glider',                 label: 'Glider' },
+    { id: 'balloon',                label: 'Lighter Than Air (Balloon)' },
+    { id: 'airship',                label: 'Lighter Than Air (Airship)' },
+    { id: 'instrument_airplane',    label: 'Instrument Airplane' },
+    { id: 'instrument_helicopter',  label: 'Instrument Helicopter' },
+    { id: 'instrument_powered_lift',label: 'Instrument Powered Lift' },
+  ],
+  'Airline Transport Pilot': [
+    { id: 'amel',        label: 'Airplane Multi-Engine Land' },
+    { id: 'ames',        label: 'Airplane Multi-Engine Sea' },
+    { id: 'helicopter',  label: 'Helicopter' },
+    { id: 'powered_lift',label: 'Powered Lift' },
+  ],
+  'Flight Instructor': [
+    { id: 'cfi_ase',  label: 'Airplane Single Engine' },
+    { id: 'cfi_ame',  label: 'Airplane Multi-Engine' },
+    { id: 'cfii',     label: 'Instrument Airplane' },
+    { id: 'cfii_h',   label: 'Instrument Helicopter' },
+    { id: 'cfi_h',    label: 'Helicopter' },
+    { id: 'cfi_gyro', label: 'Gyroplane' },
+    { id: 'cfi_gl',   label: 'Glider' },
+    { id: 'cfi_sport',label: 'Sport Pilot' },
+  ],
+  'Ground Instructor': [
+    { id: 'bgi', label: 'Basic Ground Instructor' },
+    { id: 'agi', label: 'Advanced Ground Instructor' },
+    { id: 'igi', label: 'Instrument Ground Instructor' },
+  ],
+};
+const INSTRUCTOR_CERT_TYPES = new Set(['Flight Instructor', 'Ground Instructor']);
 
 // ============================================
 // REPORTS
@@ -1775,7 +1846,8 @@ function renderReports() {
 function updateSidebarCertNum() {
   const el = $('pilot-cert-num');
   if (!el) return;
-  const num = userCerts.pilotCert?.certNumber;
+  const primary = allCertificates.find(c => c.certNumber && !INSTRUCTOR_CERT_TYPES.has(c.type));
+  const num = primary?.certNumber;
   if (num) { el.textContent = `Cert # ${num}`; el.classList.remove('hidden'); }
   else      { el.classList.add('hidden'); }
 }
@@ -1783,31 +1855,45 @@ function updateSidebarCertNum() {
 function renderCertsPage() {
   const todayStr = new Date().toISOString().split('T')[0];
 
-  // Pilot Certificate
-  const pc = userCerts.pilotCert;
-  if (pc && pc.type) {
-    $('pc-display').textContent = pc.type + ' Pilot';
-    if (pc.certNumber) {
-      $('pc-cert-num-display').textContent = `# ${pc.certNumber}`;
-      $('pc-cert-num-display').classList.remove('hidden');
+  // Certificates list
+  const certList = $('cert-list');
+  if (certList) {
+    if (!allCertificates.length) {
+      certList.innerHTML = '<div class="empty-msg" style="grid-column:1/-1">No certificates on file.</div>';
     } else {
-      $('pc-cert-num-display').classList.add('hidden');
+      certList.innerHTML = allCertificates.map(cert => {
+        const ratings = cert.ratings || [];
+        const ratingLines = ratings.map(r =>
+          `<div class="pc-rating-line">${esc(r.label || r.id)}${r.date ? ` &nbsp;·&nbsp; <strong>${formatDate(r.date)}</strong>` : ''}</div>`
+        ).join('');
+        const dateLine = cert.issueDate ? `Issued: <strong>${formatDate(cert.issueDate)}</strong>` : '';
+        return `<div class="cert-card cert-card-wide">
+          <div class="cert-card-header">
+            <div>
+              <div class="cert-title">${esc(cert.type)}</div>
+              ${cert.certNumber ? `<div class="cert-num-badge"># ${esc(cert.certNumber)}</div>` : ''}
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button class="btn-sm-outline" data-cert-edit="${cert.id}">Edit</button>
+              <button class="btn-sm-outline" style="color:var(--red);border-color:color-mix(in srgb,var(--red) 40%,transparent)" data-cert-delete="${cert.id}">Delete</button>
+            </div>
+          </div>
+          <div class="cert-dates">
+            ${dateLine}
+            ${ratings.length ? `<div class="pc-ratings-list" style="margin-top:6px">${ratingLines}</div>` : ''}
+            ${!dateLine && !ratings.length ? 'No details on file.' : ''}
+          </div>
+        </div>`;
+      }).join('');
+      certList.querySelectorAll('[data-cert-edit]').forEach(btn =>
+        btn.addEventListener('click', () => startEditCert(btn.dataset.certEdit))
+      );
+      certList.querySelectorAll('[data-cert-delete]').forEach(btn =>
+        btn.addEventListener('click', () => deleteCert(btn.dataset.certDelete))
+      );
     }
-    const certLine = pc.checkrideDate
-      ? `Checkride: <strong>${formatDate(pc.checkrideDate)}</strong>`
-      : 'No checkride date on file.';
-    const ratingLines = (pc.ratings || []).map(r => {
-      const label = PC_RATINGS.find(x => x.id === r.id)?.label || r.id;
-      return `<div class="pc-rating-line">${label}${r.date ? ` &nbsp;·&nbsp; <strong>${formatDate(r.date)}</strong>` : ''}</div>`;
-    }).join('');
-    $('pc-dates').innerHTML = certLine + (ratingLines ? `<div class="pc-ratings-list">${ratingLines}</div>` : '');
-    const hasInstructor = (pc.ratings || []).some(r => INSTRUCTOR_RATINGS.has(r.id));
-    $('cfi-currency-card').classList.toggle('hidden', !hasInstructor);
-  } else {
-    $('pc-display').textContent = '—';
-    $('pc-dates').textContent   = 'No certificate on file.';
-    $('pc-cert-num-display').classList.add('hidden');
-    $('cfi-currency-card').classList.add('hidden');
+    const hasInstructorCert = allCertificates.some(c => INSTRUCTOR_CERT_TYPES.has(c.type));
+    $('cfi-currency-card').classList.toggle('hidden', !hasInstructorCert);
   }
   updateSidebarCertNum();
 
@@ -1917,63 +2003,111 @@ function renderCertsPage() {
   );
 }
 
-// ---- Pilot Certificate ----
+// ---- Certificates CRUD ----
 
-$('edit-pilot-cert-btn').addEventListener('click', () => {
-  const pc = userCerts.pilotCert || {};
-  $('pc-type').value           = pc.type          || '';
-  $('pc-checkride-date').value = pc.checkrideDate  || '';
-  $('pc-cert-number').value    = pc.certNumber     || '';
-  PC_RATINGS.forEach(r => {
-    const saved = (pc.ratings || []).find(x => x.id === r.id);
-    $(`pc-r-${r.id}`).checked = !!saved;
-    const dateEl = $(`pc-d-${r.id}`);
-    dateEl.value = saved?.date || '';
-    dateEl.classList.toggle('hidden', !saved);
+$('add-cert-btn').addEventListener('click', () => {
+  editingCertId = null;
+  $('cert-edit-id').value = '';
+  $('cert-form-heading').textContent = 'ADD CERTIFICATE';
+  $('cert-type').value = '';
+  $('cert-number').value = '';
+  $('cert-issue-date').value = '';
+  $('cert-ratings-section').classList.add('hidden');
+  $('cert-ratings-form').innerHTML = '';
+  $('cert-form-err').classList.add('hidden');
+  $('cert-form-wrap').classList.remove('hidden');
+  $('add-cert-btn').classList.add('hidden');
+});
+
+$('cert-type').addEventListener('change', () => {
+  const type = $('cert-type').value;
+  const ratings = CERT_TYPE_RATINGS[type] || [];
+  if (!ratings.length) { $('cert-ratings-section').classList.add('hidden'); return; }
+  $('cert-ratings-section').classList.remove('hidden');
+  $('cert-ratings-form').innerHTML = ratings.map(r => `
+    <div class="rating-row">
+      <label class="chk"><input type="checkbox" id="cr-${r.id}" data-rid="${r.id}"/> ${r.label}</label>
+      <input type="date" id="cd-${r.id}" class="rating-date hidden" placeholder="Date added"/>
+    </div>`).join('');
+  ratings.forEach(r => {
+    $(`cr-${r.id}`).addEventListener('change', () => {
+      const chk = $(`cr-${r.id}`).checked;
+      $(`cd-${r.id}`).classList.toggle('hidden', !chk);
+      if (!chk) $(`cd-${r.id}`).value = '';
+    });
   });
-  $('pc-form-err').classList.add('hidden');
-  $('pilot-cert-form').classList.remove('hidden');
-  $('edit-pilot-cert-btn').classList.add('hidden');
 });
 
-PC_RATINGS.forEach(r => {
-  $(`pc-r-${r.id}`).addEventListener('change', () => {
-    const dateEl = $(`pc-d-${r.id}`);
-    const checked = $(`pc-r-${r.id}`).checked;
-    dateEl.classList.toggle('hidden', !checked);
-    if (!checked) dateEl.value = '';
+$('cert-cancel-btn').addEventListener('click', () => {
+  $('cert-form-wrap').classList.add('hidden');
+  $('add-cert-btn').classList.remove('hidden');
+  editingCertId = null;
+});
+
+function startEditCert(id) {
+  const cert = allCertificates.find(c => c.id === id);
+  if (!cert) return;
+  editingCertId = id;
+  $('cert-edit-id').value = id;
+  $('cert-form-heading').textContent = 'EDIT CERTIFICATE';
+  $('cert-type').value = cert.type || '';
+  $('cert-number').value = cert.certNumber || '';
+  $('cert-issue-date').value = cert.issueDate || '';
+  $('cert-type').dispatchEvent(new Event('change'));
+  (cert.ratings || []).forEach(r => {
+    const cb = $(`cr-${r.id}`);
+    if (!cb) return;
+    cb.checked = true;
+    const dateEl = $(`cd-${r.id}`);
+    if (dateEl) { dateEl.value = r.date || ''; dateEl.classList.remove('hidden'); }
   });
-});
+  $('cert-form-err').classList.add('hidden');
+  $('cert-form-wrap').classList.remove('hidden');
+  $('add-cert-btn').classList.add('hidden');
+  $('cert-form-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
 
-$('pc-cancel-btn').addEventListener('click', () => {
-  $('pilot-cert-form').classList.add('hidden');
-  $('edit-pilot-cert-btn').classList.remove('hidden');
-});
+async function deleteCert(id) {
+  if (!confirm('Delete this certificate?')) return;
+  await db.collection('certificates').doc(id).delete();
+}
 
-$('pc-save-btn').addEventListener('click', async () => {
-  $('pc-form-err').classList.add('hidden');
-  $('pc-save-btn').disabled = true;
-  const ratings = PC_RATINGS
-    .filter(r => $(`pc-r-${r.id}`).checked)
-    .map(r => ({ id: r.id, date: $(`pc-d-${r.id}`).value }));
-  const pilotCert = {
-    type:          $('pc-type').value,
-    checkrideDate: $('pc-checkride-date').value,
-    certNumber:    $('pc-cert-number').value.trim(),
+$('cert-save-btn').addEventListener('click', async () => {
+  $('cert-form-err').classList.add('hidden');
+  const type = $('cert-type').value;
+  if (!type) {
+    $('cert-form-err').textContent = 'Certificate type is required.';
+    $('cert-form-err').classList.remove('hidden');
+    return;
+  }
+  const availableRatings = CERT_TYPE_RATINGS[type] || [];
+  const ratings = availableRatings
+    .filter(r => $(`cr-${r.id}`)?.checked)
+    .map(r => ({ id: r.id, label: r.label, date: $(`cd-${r.id}`)?.value || '' }));
+  const data = {
+    uid:        currentUser.uid,
+    type,
+    certNumber: $('cert-number').value.trim(),
+    issueDate:  $('cert-issue-date').value,
     ratings,
   };
+  $('cert-save-btn').disabled = true;
   try {
-    await db.collection('users').doc(currentUser.uid).set({ pilotCert }, { merge: true });
-    userCerts.pilotCert = pilotCert;
-    renderCertsPage();
-    $('pilot-cert-form').classList.add('hidden');
-    $('edit-pilot-cert-btn').classList.remove('hidden');
+    if (editingCertId) {
+      await db.collection('certificates').doc(editingCertId).update(data);
+    } else {
+      data.createdAt = new Date().toISOString();
+      await db.collection('certificates').add(data);
+    }
+    $('cert-form-wrap').classList.add('hidden');
+    $('add-cert-btn').classList.remove('hidden');
+    editingCertId = null;
   } catch(e) {
-    $('pc-form-err').textContent = 'Error saving. Please try again.';
-    $('pc-form-err').classList.remove('hidden');
+    $('cert-form-err').textContent = 'Error saving. Please try again.';
+    $('cert-form-err').classList.remove('hidden');
     console.error(e);
   }
-  $('pc-save-btn').disabled = false;
+  $('cert-save-btn').disabled = false;
 });
 
 // ---- CFI Currency ----

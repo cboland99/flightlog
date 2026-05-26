@@ -419,69 +419,53 @@
       <section class="page hidden" id="page-certs">
 
         <!-- ── Certificates ── -->
-        <div class="section-row"><h3 class="section-heading">CERTIFICATES</h3></div>
-        <div class="certs-grid">
+        <div class="section-row"><h3 class="section-heading">CERTIFICATES</h3><button class="btn-sm-outline" id="add-cert-btn">+ Add</button></div>
 
-          <!-- Pilot Certificate (full width) -->
-          <div class="cert-card cert-card-wide">
-            <div class="cert-card-header">
-              <div>
-                <div class="cert-title">PILOT CERTIFICATE</div>
-                <div class="cert-subtitle" id="pc-display">—</div>
+        <div id="cert-form-wrap" class="hidden">
+          <div class="form-section">
+            <div class="fs-title" id="cert-form-heading">ADD CERTIFICATE</div>
+            <input type="hidden" id="cert-edit-id"/>
+            <div class="form-grid">
+              <div class="field">
+                <label>CERTIFICATE TYPE <span class="req">*</span></label>
+                <select id="cert-type">
+                  <option value="">— Select —</option>
+                  <option>Student Pilot</option>
+                  <option>Recreational Pilot</option>
+                  <option>Sport Pilot</option>
+                  <option>Private Pilot</option>
+                  <option>Commercial Pilot</option>
+                  <option>Airline Transport Pilot</option>
+                  <option>Flight Instructor</option>
+                  <option>Ground Instructor</option>
+                </select>
               </div>
-              <div class="cert-num-badge hidden" id="pc-cert-num-display"></div>
+              <div class="field">
+                <label>CERTIFICATE NUMBER</label>
+                <input type="text" id="cert-number" placeholder="e.g. 4012345678"/>
+              </div>
+              <div class="field">
+                <label>ORIGINAL ISSUE / CHECKRIDE DATE</label>
+                <input type="date" id="cert-issue-date"/>
+              </div>
             </div>
-            <div class="cert-dates" id="pc-dates">No certificate on file.</div>
-            <button class="btn-sm-outline" id="edit-pilot-cert-btn">Update</button>
-            <div id="pilot-cert-form" class="hidden" style="margin-top:.85rem">
-              <div class="form-grid">
-                <div class="field">
-                  <label>CERTIFICATE TYPE</label>
-                  <select id="pc-type">
-                    <option value="">— Select —</option>
-                    <option value="Student">Student Pilot</option>
-                    <option value="Recreational">Recreational Pilot</option>
-                    <option value="Sport">Sport Pilot</option>
-                    <option value="Private">Private Pilot</option>
-                    <option value="Commercial">Commercial Pilot</option>
-                    <option value="ATP">Airline Transport Pilot (ATP)</option>
-                  </select>
-                </div>
-                <div class="field">
-                  <label>CERTIFICATE CHECKRIDE DATE</label>
-                  <input type="date" id="pc-checkride-date"/>
-                </div>
-                <div class="field">
-                  <label>CERTIFICATE NUMBER</label>
-                  <input type="text" id="pc-cert-number" placeholder="e.g. 4012345678"/>
-                </div>
-              </div>
-              <div class="fs-title" style="margin:.75rem 0 .4rem">RATINGS</div>
-              <div class="ratings-form">
-                <div class="rating-row"><label class="chk"><input type="checkbox" id="pc-r-instrument"/> Instrument</label><input type="date" id="pc-d-instrument" class="rating-date hidden"/></div>
-                <div class="rating-row"><label class="chk"><input type="checkbox" id="pc-r-mel"/> Single-Engine Land</label><input type="date" id="pc-d-mel" class="rating-date hidden"/></div>
-                <div class="rating-row"><label class="chk"><input type="checkbox" id="pc-r-mel"/> Multi-Engine Land</label><input type="date" id="pc-d-mel" class="rating-date hidden"/></div>
-                <div class="rating-row"><label class="chk"><input type="checkbox" id="pc-r-mes"/> Single-Engine Sea</label><input type="date" id="pc-d-mes" class="rating-date hidden"/></div>
-                <div class="rating-row"><label class="chk"><input type="checkbox" id="pc-r-mes"/> Multi-Engine Sea</label><input type="date" id="pc-d-mes" class="rating-date hidden"/></div>
-                <div class="rating-row"><label class="chk"><input type="checkbox" id="pc-r-ses"/> Lighter than Air</label><input type="date" id="pc-d-ses" class="rating-date hidden"/></div>
-                <div class="rating-row"><label class="chk"><input type="checkbox" id="pc-r-glider"/> Glider</label><input type="date" id="pc-d-glider" class="rating-date hidden"/></div>
-                <div class="rating-row"><label class="chk"><input type="checkbox" id="pc-r-helicopter"/> Helicopter</label><input type="date" id="pc-d-helicopter" class="rating-date hidden"/></div>
-              </div>
-              <div class="fs-title" style="margin:.75rem 0 .4rem">INSTRUCTOR Certificates</div>
-              <div class="ratings-form">
-                <div class="rating-row"><label class="chk"><input type="checkbox" id="pc-r-cfi"/> CFI</label><input type="date" id="pc-d-cfi" class="rating-date hidden"/></div>
-                <div class="rating-row"><label class="chk"><input type="checkbox" id="pc-r-cfii"/> CFII</label><input type="date" id="pc-d-cfii" class="rating-date hidden"/></div>
-                <div class="rating-row"><label class="chk"><input type="checkbox" id="pc-r-mei"/> MEI</label><input type="date" id="pc-d-mei" class="rating-date hidden"/></div>
-              </div>
-              <div id="pc-form-err" class="error-msg hidden"></div>
-              <div class="form-actions">
-                <button class="btn-outline" id="pc-cancel-btn">Cancel</button>
-                <button class="btn-primary" id="pc-save-btn">SAVE</button>
-              </div>
+            <div id="cert-ratings-section" class="hidden">
+              <div class="fs-title" style="margin:.75rem 0 .4rem">RATINGS / PRIVILEGES</div>
+              <div class="ratings-form" id="cert-ratings-form"></div>
+            </div>
+            <div id="cert-form-err" class="error-msg hidden"></div>
+            <div class="form-actions">
+              <button class="btn-outline" id="cert-cancel-btn">Cancel</button>
+              <button class="btn-primary" id="cert-save-btn">SAVE</button>
             </div>
           </div>
+        </div>
 
-          <!-- CFI Currency (shown only when instructor ratings saved) -->
+        <div id="cert-list" class="certs-grid" style="margin-top:10px"></div>
+
+        <div class="certs-grid" style="margin-top:10px">
+
+          <!-- CFI Currency (shown only when Flight Instructor cert is saved) -->
           <div class="cert-card cert-card-wide hidden" id="cfi-currency-card">
             <div class="cert-card-header">
               <div>
