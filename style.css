@@ -296,7 +296,7 @@ button { cursor: pointer; font-family: inherit; }
   align-items: center;
   gap: 8px;
   width: calc(100% - 24px);
-  margin: auto 12px 16px;
+  margin: 0 12px 16px;
   padding: 10px 14px;
   background: transparent;
   border: 1px solid var(--border);
@@ -1678,6 +1678,42 @@ nav {
   .rpt-8710-table td, .rpt-8710-table th,
   .rpt-class-table td { border-color: #ccc; }
 }
+
+/* ---- SIDEBAR RUNWAY LIGHTING ---- */
+.sidebar-runway {
+  margin: auto 10px 8px;
+  flex-shrink: 0;
+}
+.sidebar-runway svg { width: 100%; height: auto; display: block; }
+
+@keyframes rwy-seq {
+  0%, 10%, 100% { opacity: 0.38; filter: none; }
+  4%            { opacity: 1;    filter: drop-shadow(0 0 5px #fff) drop-shadow(0 0 2px #fff); }
+}
+.rwy-apl   { animation: rwy-seq 2.4s ease-in-out infinite; }
+.rwy-apl-9 { animation-delay: 0s; }
+.rwy-apl-8 { animation-delay: 0.30s; }
+.rwy-apl-7 { animation-delay: 0.60s; }
+.rwy-apl-6 { animation-delay: 0.90s; }
+.rwy-apl-5 { animation-delay: 1.20s; }
+.rwy-apl-4 { animation-delay: 1.50s; }
+.rwy-apl-3 { animation-delay: 1.80s; }
+.rwy-apl-2 { animation-delay: 2.10s; }
+.rwy-apl-1 { animation-delay: 2.40s; }
+
+@keyframes rwy-pulse-red {
+  0%, 100% { opacity: 0.82; filter: drop-shadow(0 0 4px #ff3333); }
+  50%       { opacity: 1.00; filter: drop-shadow(0 0 8px #ff3333); }
+}
+@keyframes rwy-pulse-grn {
+  0%, 100% { opacity: 0.82; filter: drop-shadow(0 0 4px #00e576); }
+  50%       { opacity: 1.00; filter: drop-shadow(0 0 8px #00e576); }
+}
+.rwy-red   { animation: rwy-pulse-red 3s ease-in-out infinite; }
+.rwy-green { animation: rwy-pulse-grn 3s ease-in-out infinite 1.5s; }
+
+.papi-w { fill: rgba(220,230,255,0.55); filter: drop-shadow(0 0 2px rgba(255,255,255,0.30)); }
+.papi-r { fill: rgba(200,40,40,0.50);  filter: drop-shadow(0 0 2px rgba(255,60,60,0.30)); }
 
 /* ---- COMPASS ROSE WATERMARK ---- */
 .db-compass {

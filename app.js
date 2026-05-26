@@ -6,6 +6,9 @@
 const auth = firebase.auth();
 const db   = firebase.firestore();
 
+// Require sign-in on every fresh browser session (no persistent auto-login)
+auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
+
 // ---- STATE ----
 let currentUser   = null;
 let allFlights    = [];
