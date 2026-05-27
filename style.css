@@ -492,6 +492,7 @@ nav {
 ============================================ */
 .page {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 20px;
   display: none;
@@ -1715,27 +1716,6 @@ nav {
 .papi-w { fill: rgba(220,230,255,0.55); filter: drop-shadow(0 0 2px rgba(255,255,255,0.30)); }
 .papi-r { fill: rgba(200,40,40,0.50);  filter: drop-shadow(0 0 2px rgba(255,60,60,0.30)); }
 
-/* ---- COMPASS ROSE WATERMARK ---- */
-.db-compass {
-  position: absolute;
-  bottom: -60px;
-  right: -60px;
-  width: 420px;
-  height: 420px;
-  pointer-events: none;
-  color: var(--accent);
-  opacity: 0.045;
-  animation: compass-spin 120s linear infinite;
-  z-index: 0;
-}
-#page-dashboard { position: relative; overflow: hidden; }
-@keyframes compass-spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-@media (max-width: 600px) {
-  .db-compass { width: 280px; height: 280px; bottom: -40px; right: -40px; }
-}
 
 /* ---- SCROLLBAR ---- */
 ::-webkit-scrollbar        { width: 4px; height: 4px; }
