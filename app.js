@@ -84,24 +84,8 @@ $('login-btn').addEventListener('click', async () => {
   try {
     await auth.signInWithEmailAndPassword(email, pass);
   } catch (e) {
-    // Account doesn't exist yet — auto-create it on first login
-    if (e.code === 'auth/user-not-found' || e.code === 'auth/invalid-credential') {
-      try {
-        const name = 'Connor Boland';
-        const cred = await auth.createUserWithEmailAndPassword(email, pass);
-        await cred.user.updateProfile({ displayName: name });
-        await db.collection('users').doc(cred.user.uid).set({
-          name, email, createdAt: new Date().toISOString()
-        });
-        // onAuthStateChanged handles the rest
-      } catch (createErr) {
-        showAuthErr(friendlyAuthError(createErr.code));
-        $('login-btn').disabled = false;
-      }
-    } else {
-      showAuthErr(friendlyAuthError(e.code));
-      $('login-btn').disabled = false;
-    }
+    showAuthErr(friendlyAuthError(e.code));
+    $('login-btn').disabled = false;
   }
 });
 
@@ -201,6 +185,10 @@ auth.onAuthStateChanged(user => {
     $('register-screen').classList.remove('active');
     $('auth-screen').classList.remove('hidden');
     $('auth-screen').classList.add('active');
+    $('login-email').value    = '';
+    $('login-password').value = '';
+    $('login-btn').disabled   = false;
+    $('auth-error').classList.add('hidden');
     allFlights      = [];
     allAircraft     = [];
     allEndorsements = [];

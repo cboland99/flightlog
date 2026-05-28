@@ -1,5 +1,5 @@
 // FlightLog Service Worker
-const CACHE_NAME = 'flightlog-v7';
+const CACHE_NAME = 'flightlog-v9';
 const ASSETS = [
   '/',
   '/index.html',
