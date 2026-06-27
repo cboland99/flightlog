@@ -269,30 +269,42 @@ function renderDashboard() {
   allAircraft.forEach(ac => {
     if (ac.class && ac.category) {
       const key = `${ac.class}|${ac.category}`;
-      if (!combos.has(key)) combos.set(key, { cls: ac.class, cat: ac.category, ldg: 0 });
+      if (!combos.has(key)) combos.set(key, { cls: ac.class, cat: ac.category, ldg: 0, nightLdg: 0 });
     }
   });
-  const hasTailwheel = allAircraft.some(ac => ac.tailwheel);
-  let twLdg = 0;
+  const twCombos = new Map();
+  allAircraft.forEach(ac => {
+    if (ac.tailwheel && ac.class && ac.category) {
+      const key = `${ac.class}|${ac.category}`;
+      if (!twCombos.has(key)) twCombos.set(key, { cls: ac.class, cat: ac.category, ldg: 0, nightLdg: 0 });
+    }
+  });
 
   allFlights.filter(f => f.date >= iso90).forEach(f => {
     const ac = acByTail[f.tail];
     if (!ac) return;
     const ldg = (+f.ldgDay || 0) + (+f.ldgNight || 0);
+    const nightLdg = +f.ldgNight || 0;
     const key = `${ac.class}|${ac.category}`;
-    if (combos.has(key)) combos.get(key).ldg += ldg;
-    if (ac.tailwheel) twLdg += ldg;
+    if (combos.has(key)) {
+      combos.get(key).ldg += ldg;
+      combos.get(key).nightLdg += nightLdg;
+    }
+    if (ac.tailwheel && twCombos.has(key)) {
+      twCombos.get(key).ldg += ldg;
+      twCombos.get(key).nightLdg += nightLdg;
+    }
   });
 
   // Find expiry = date of 3rd most recent landing + 90 days
   const sortedByDate = [...allFlights].sort((a, b) => b.date.localeCompare(a.date));
   const isoToday = today.toISOString().split('T')[0];
-  const ldgExpiry = filterFn => {
+  const ldgExpiry = (filterFn, ldgCount = f => (+f.ldgDay || 0) + (+f.ldgNight || 0)) => {
     let count = 0;
     for (const f of sortedByDate) {
       const ac = acByTail[f.tail];
       if (!ac || !filterFn(ac)) continue;
-      const ldg = (+f.ldgDay || 0) + (+f.ldgNight || 0);
+      const ldg = ldgCount(f);
       if (!ldg) continue;
       count += ldg;
       if (count >= 3) {
@@ -313,29 +325,37 @@ function renderDashboard() {
     ? `<span class="currency-badge current">CURRENT</span>`
     : `<span class="currency-badge not-current">NOT CURRENT</span>`;
 
-  let ldgHtml = '';
-  combos.forEach(({ cls, cat, ldg }, key) => {
-    const expires = ldgExpiry(ac => `${ac.class}|${ac.category}` === key);
-    ldgHtml += `<div class="currency-card">
+  const currencyHalf = (ldg, expires, label) => `
+    <div class="currency-half">
       <div class="currency-card-header">
-        <div class="currency-label">LANDINGS — ${esc(cls)} ${esc(cat.toUpperCase())}</div>
+        <div class="currency-label">${label}</div>
         ${ldgBadge(ldg)}
       </div>
       <div class="currency-val">${ldg}</div>
       <div class="currency-sub">${expirySub(expires)}</div>
     </div>`;
-  });
-  if (hasTailwheel) {
-    const twExpires = ldgExpiry(ac => ac.tailwheel);
-    ldgHtml += `<div class="currency-card">
-      <div class="currency-card-header">
-        <div class="currency-label">LANDINGS — TAILWHEEL</div>
-        ${ldgBadge(twLdg)}
+
+  const splitCard = (title, ldg, expires, nightLdg, nightExpires) => `
+    <div class="currency-card currency-card-split">
+      <div class="currency-label currency-card-title">${title}</div>
+      <div class="currency-split">
+        ${currencyHalf(ldg, expires, 'CURRENCY')}
+        <div class="currency-divider"></div>
+        ${currencyHalf(nightLdg, nightExpires, 'NIGHT CURRENCY')}
       </div>
-      <div class="currency-val">${twLdg}</div>
-      <div class="currency-sub">${expirySub(twExpires)}</div>
     </div>`;
-  }
+
+  let ldgHtml = '';
+  combos.forEach(({ cls, cat, ldg, nightLdg }, key) => {
+    const expires = ldgExpiry(ac => `${ac.class}|${ac.category}` === key);
+    const nightExpires = ldgExpiry(ac => `${ac.class}|${ac.category}` === key, f => +f.ldgNight || 0);
+    ldgHtml += splitCard(`${esc(cls)} ${esc(cat.toUpperCase())}`, ldg, expires, nightLdg, nightExpires);
+  });
+  twCombos.forEach(({ cls, cat, ldg, nightLdg }, key) => {
+    const expires = ldgExpiry(ac => `${ac.class}|${ac.category}` === key && ac.tailwheel);
+    const nightExpires = ldgExpiry(ac => `${ac.class}|${ac.category}` === key && ac.tailwheel, f => +f.ldgNight || 0);
+    ldgHtml += splitCard(`${esc(cls)} ${esc(cat.toUpperCase())} TAILWHEEL`, ldg, expires, nightLdg, nightExpires);
+  });
   if (!ldgHtml) {
     if (allAircraft.length === 0) {
       ldgHtml = `<div class="currency-card">
@@ -347,14 +367,12 @@ function renderDashboard() {
       const totalLdg = allFlights
         .filter(f => f.date >= iso90 && acByTail[f.tail])
         .reduce((sum, f) => sum + (+f.ldgDay || 0) + (+f.ldgNight || 0), 0);
-      ldgHtml = `<div class="currency-card">
-        <div class="currency-card-header">
-          <div class="currency-label">LANDINGS — LAST 90 DAYS</div>
-          ${ldgBadge(totalLdg)}
-        </div>
-        <div class="currency-val">${totalLdg}</div>
-        <div class="currency-sub">3 required · Edit aircraft to set class &amp; category for full breakdown</div>
-      </div>`;
+      const totalNightLdg = allFlights
+        .filter(f => f.date >= iso90 && acByTail[f.tail])
+        .reduce((sum, f) => sum + (+f.ldgNight || 0), 0);
+      const totalExpires = ldgExpiry(() => true);
+      const totalNightExpires = ldgExpiry(() => true, f => +f.ldgNight || 0);
+      ldgHtml = splitCard('LAST 90 DAYS', totalLdg, totalExpires, totalNightLdg, totalNightExpires);
     }
   }
   $('currency-ldg-grid').innerHTML = ldgHtml;
@@ -887,6 +905,26 @@ function renderAircraftPage() {
 const AC_TEXT_FIELDS = ['ac-tail','ac-make','ac-model','ac-variant','ac-type'];
 const AC_CHK_FIELDS  = ['ac-highperf','ac-complex','ac-taa','ac-turbine','ac-tailwheel','ac-pressurized'];
 
+const AC_CLASS_OPTIONS = {
+  'Airplane':     [['SEL','SEL (Single Engine Land)'],['MEL','MEL (Multi Engine Land)'],['SES','SES (Single Engine Sea)'],['MES','MES (Multi Engine Sea)']],
+  'Glider':       [['Glider','Glider']],
+  'Rotorcraft':   [['Helicopter','Helicopter'],['Gyroplane','Gyroplane']],
+  'Powered Lift': [['Powered Lift','Powered Lift']],
+};
+
+function populateAcClasses(category, selectedClass = '') {
+  const sel = $('ac-class');
+  const opts = AC_CLASS_OPTIONS[category] || [];
+  if (opts.length === 0) {
+    sel.innerHTML = '<option value="">— Select category first —</option>';
+    sel.disabled = true;
+  } else {
+    sel.innerHTML = '<option value="">— Select —</option>' +
+      opts.map(([v, l]) => `<option value="${v}"${v === selectedClass ? ' selected' : ''}>${l}</option>`).join('');
+    sel.disabled = false;
+  }
+}
+
 function resetAircraftForm() {
   editingAcId = null;
   $('ac-edit-id').value         = '';
@@ -895,8 +933,8 @@ function resetAircraftForm() {
   $('ac-form-err').classList.add('hidden');
   AC_TEXT_FIELDS.forEach(id => { $(id).value = ''; });
   $('ac-year').value     = '';
-  $('ac-class').value    = '';
   $('ac-category').value = '';
+  populateAcClasses('');
   AC_CHK_FIELDS.forEach(id => { $(id).checked = false; });
 }
 
@@ -915,8 +953,8 @@ function startEditAircraft(id) {
   $('ac-model').value    = ac.model    || '';
   $('ac-variant').value  = ac.variant  || '';
   $('ac-year').value     = ac.year     || '';
-  $('ac-class').value    = ac.class    || '';
   $('ac-category').value = ac.category || '';
+  populateAcClasses(ac.category || '', ac.class || '');
   $('ac-type').value     = ac.type     || '';
 
   $('ac-highperf').checked    = !!ac.highPerf;
@@ -946,6 +984,10 @@ $('add-aircraft-btn').addEventListener('click', () => {
 $('ac-cancel-btn').addEventListener('click', () => {
   resetAircraftForm();
   $('ac-form-wrap').classList.add('hidden');
+});
+
+$('ac-category').addEventListener('change', () => {
+  populateAcClasses($('ac-category').value);
 });
 
 $('ac-save-btn').addEventListener('click', async () => {
@@ -1102,9 +1144,10 @@ function renderAnalyticsTable(flights) {
     { label: 'INST SIM',   val: sum('instSim').toFixed(1),      unit: 'hrs' },
     { label: 'APPR ACT',   val: Math.round(sum('apprActual')),  unit: ''    },
     { label: 'APPR SIM',   val: Math.round(sum('apprSim')),     unit: ''    },
-    { label: 'DAY LDG',    val: Math.round(sum('ldgDay')),      unit: ''    },
-    { label: 'NIGHT LDG',  val: Math.round(sum('ldgNight')),    unit: ''    },
-    { label: 'FLIGHTS',    val: flights.length,                  unit: ''    },
+    { label: 'DAY LDG',    val: Math.round(sum('ldgDay')),                          unit: '' },
+    { label: 'NIGHT LDG',  val: Math.round(sum('ldgNight')),                        unit: '' },
+    { label: 'TOTAL LDG',  val: Math.round(sum('ldgDay') + sum('ldgNight')),        unit: '' },
+    { label: 'FLIGHTS',    val: flights.length,                                      unit: '' },
   ];
   grid.innerHTML = STATS.map(s => `
     <div class="analytics-stat-card">
@@ -1145,7 +1188,7 @@ $('af-reset').addEventListener('click', () => {
 
 function renderCharts(flights) {
   if (!flights || !flights.length) {
-    ['monthly','cumulative','aircraft','daynight'].forEach(k => destroyChart(k));
+    ['monthly','cumulative','aircraft','daynight','ldgMonthly','ldgClass'].forEach(k => destroyChart(k));
     return;
   }
 
@@ -1226,6 +1269,51 @@ function renderCharts(flights) {
     data: {
       labels: ['Day', 'Night'],
       datasets: [{ data: [+dayHrs.toFixed(1), +nightHrs.toFixed(1)], backgroundColor: [amber, '#1e3a8a'], borderWidth: 0 }]
+    },
+    options: { responsive: true, plugins: { legend: { labels: { color: textColor, font: { size: 11 } } } } }
+  });
+
+  // Landings per month — stacked bar (day / night)
+  const ldgMonthDay   = {};
+  const ldgMonthNight = {};
+  flights.forEach(f => {
+    const key = (f.date || '').slice(0, 7);
+    if (!key) return;
+    ldgMonthDay[key]   = (ldgMonthDay[key]   || 0) + (+f.ldgDay   || 0);
+    ldgMonthNight[key] = (ldgMonthNight[key] || 0) + (+f.ldgNight || 0);
+  });
+  const ldgMonths = [...new Set([...Object.keys(ldgMonthDay), ...Object.keys(ldgMonthNight)])].sort().slice(-24);
+  destroyChart('ldgMonthly');
+  charts.ldgMonthly = new Chart($('c-ldg-monthly'), {
+    type: 'bar',
+    data: {
+      labels: ldgMonths.map(m => { const [y, mo] = m.split('-'); return `${MON[+mo-1]} '${y.slice(2)}`; }),
+      datasets: [
+        { label: 'Day',   data: ldgMonths.map(m => ldgMonthDay[m]   || 0), backgroundColor: amber + 'cc',   borderRadius: 3, stack: 'ldg' },
+        { label: 'Night', data: ldgMonths.map(m => ldgMonthNight[m] || 0), backgroundColor: '#1e3a8a' + 'cc', borderRadius: 3, stack: 'ldg' }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color: textColor, font: { size: 11 } } } },
+      scales: { x: axis, y: { ...axis, beginAtZero: true, ticks: { ...axis.ticks, precision: 0 } } }
+    }
+  });
+
+  // Landings by class — doughnut
+  const ldgClsMap = {};
+  flights.forEach(f => {
+    const ac  = acByTail[f.tail];
+    const key = ac?.class || 'Unknown';
+    ldgClsMap[key] = (ldgClsMap[key] || 0) + (+f.ldgDay || 0) + (+f.ldgNight || 0);
+  });
+  const ldgClsKeys = Object.keys(ldgClsMap);
+  destroyChart('ldgClass');
+  charts.ldgClass = new Chart($('c-ldg-class'), {
+    type: 'doughnut',
+    data: {
+      labels: ldgClsKeys,
+      datasets: [{ data: ldgClsKeys.map(k => ldgClsMap[k]), backgroundColor: ldgClsKeys.map((_, i) => palette[i % palette.length]), borderWidth: 0 }]
     },
     options: { responsive: true, plugins: { legend: { labels: { color: textColor, font: { size: 11 } } } } }
   });
@@ -1640,6 +1728,7 @@ function renderReports() {
   const iso12mo = (() => { const d = new Date(); d.setFullYear(d.getFullYear() - 1); return d.toISOString().split('T')[0]; })();
   const flights12 = allFlights.filter(f => f.date >= iso12mo);
   const acSum = (fs, pred) => fs.reduce((a, f) => a + (pred(acMap[f.tail]) ? (+f.total || 0) : 0), 0);
+  const acLdg = (fs, pred) => fs.reduce((a, f) => a + (pred(acMap[f.tail]) ? (+f.ldgDay || 0) + (+f.ldgNight || 0) : 0), 0);
 
   const insCategories = [
     ['Total Time',       () => true                       ],
@@ -1655,29 +1744,62 @@ function renderReports() {
       <td style="text-align:left;font-family:'DM Sans',sans-serif">${label}</td>
       <td>${acSum(allFlights, pred).toFixed(1)}</td>
       <td>${acSum(flights12,  pred).toFixed(1)}</td>
+      <td>${acLdg(allFlights, pred)}</td>
+      <td>${acLdg(flights12,  pred)}</td>
     </tr>`
   ).join('');
 
-  // Time by make & model table (total + last 12 months)
+  // Time by make & model (variants merged) and by make, model & variant
   const byMakeModel = {};
   const byMakeModel12 = {};
+  const byMakeModelLdg = {};
+  const byMakeModelLdg12 = {};
+  const byVariant = {};
+  const byVariant12 = {};
+  const byVariantLdg = {};
+  const byVariantLdg12 = {};
   allFlights.forEach(f => {
-    let label = (f.makeModel || '').trim();
-    if (!label && f.tail && acMap[f.tail]) {
+    let mmLabel = (f.makeModel || '').trim();
+    let varLabel = mmLabel;
+    if (f.tail && acMap[f.tail]) {
       const ac = acMap[f.tail];
-      label = [ac.make, ac.model].filter(Boolean).join(' ');
+      mmLabel  = [ac.make, ac.model].filter(Boolean).join(' ') || mmLabel || 'Unknown';
+      varLabel = (ac.variant
+        ? [ac.make, ac.variant].filter(Boolean).join(' ')
+        : mmLabel) || varLabel || 'Unknown';
     }
-    if (!label) label = 'Unknown';
-    byMakeModel[label] = (byMakeModel[label] || 0) + (+f.total || 0);
-    if (f.date >= iso12mo) byMakeModel12[label] = (byMakeModel12[label] || 0) + (+f.total || 0);
+    if (!mmLabel)  mmLabel  = 'Unknown';
+    if (!varLabel) varLabel = 'Unknown';
+    const ldg = (+f.ldgDay || 0) + (+f.ldgNight || 0);
+    byMakeModel[mmLabel]    = (byMakeModel[mmLabel]    || 0) + (+f.total || 0);
+    byMakeModelLdg[mmLabel] = (byMakeModelLdg[mmLabel] || 0) + ldg;
+    byVariant[varLabel]     = (byVariant[varLabel]     || 0) + (+f.total || 0);
+    byVariantLdg[varLabel]  = (byVariantLdg[varLabel]  || 0) + ldg;
+    if (f.date >= iso12mo) {
+      byMakeModel12[mmLabel]    = (byMakeModel12[mmLabel]    || 0) + (+f.total || 0);
+      byMakeModelLdg12[mmLabel] = (byMakeModelLdg12[mmLabel] || 0) + ldg;
+      byVariant12[varLabel]     = (byVariant12[varLabel]     || 0) + (+f.total || 0);
+      byVariantLdg12[varLabel]  = (byVariantLdg12[varLabel]  || 0) + ldg;
+    }
   });
 
-  const mmRows = Object.entries(byMakeModel)
-    .sort((a, b) => b[1] - a[1])
-    .map(([mm, hrs]) => `<tr><td>${esc(mm)}</td><td>${hrs.toFixed(1)}</td><td>${(byMakeModel12[mm] || 0).toFixed(1)}</td></tr>`)
-    .join('');
+  const buildRows = (map, map12, ldgMap, ldgMap12) =>
+    Object.entries(map)
+      .sort((a, b) => b[1] - a[1])
+      .map(([lbl, hrs]) => `<tr>
+        <td>${esc(lbl)}</td>
+        <td>${hrs.toFixed(1)}</td>
+        <td>${(map12[lbl]    || 0).toFixed(1)}</td>
+        <td>${ldgMap[lbl]   || 0}</td>
+        <td>${ldgMap12[lbl] || 0}</td>
+      </tr>`)
+      .join('');
+  const noData = '<tr><td colspan="5" style="text-align:center;color:var(--text3)">No flights logged</td></tr>';
+
   $('rpt-ins-table').querySelector('tbody').innerHTML =
-    mmRows || '<tr><td colspan="3" style="text-align:center;color:var(--text3)">No flights logged</td></tr>';
+    buildRows(byMakeModel, byMakeModel12, byMakeModelLdg, byMakeModelLdg12) || noData;
+  $('rpt-ins-variant-table').querySelector('tbody').innerHTML =
+    buildRows(byVariant, byVariant12, byVariantLdg, byVariantLdg12) || noData;
 
   // ── FAA Form 8710 ──
   const mm2sim = mm => {

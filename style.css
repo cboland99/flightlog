@@ -598,6 +598,32 @@ nav {
 .currency-badge.current     { background: color-mix(in srgb, var(--green) 15%, transparent); color: var(--green); }
 .currency-badge.not-current { background: color-mix(in srgb, var(--red)   12%, transparent); color: var(--red);   }
 
+.currency-card-split { gap: 8px; }
+.currency-card-title {
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.currency-split {
+  display: flex;
+  align-items: stretch;
+}
+.currency-half {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 8px;
+}
+.currency-half:first-child { padding-right: 14px; }
+.currency-half:last-child  { padding-left: 14px; }
+.currency-divider {
+  width: 1px;
+  background: var(--border);
+  margin-top: 8px;
+  flex-shrink: 0;
+}
+.currency-half .currency-val { font-size: 28px; }
+
 .section-row {
   display: flex;
   align-items: center;

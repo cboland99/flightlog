@@ -414,6 +414,8 @@
           <div class="chart-card wide"><div class="chart-label">CUMULATIVE TOTAL HOURS</div><canvas id="c-cumulative" height="80"></canvas></div>
           <div class="chart-card"><div class="chart-label">TIME BY CLASS</div><canvas id="c-aircraft" height="140"></canvas></div>
           <div class="chart-card"><div class="chart-label">DAY VS NIGHT</div><canvas id="c-daynight" height="140"></canvas></div>
+          <div class="chart-card wide"><div class="chart-label">LANDINGS PER MONTH</div><canvas id="c-ldg-monthly" height="80"></canvas></div>
+          <div class="chart-card"><div class="chart-label">LANDINGS BY CLASS</div><canvas id="c-ldg-class" height="140"></canvas></div>
         </div>
 
       </section>
@@ -434,15 +436,6 @@
               <div class="field"><label>MODEL</label><input type="text" id="ac-model" placeholder="172"/></div>
               <div class="field"><label>VARIANT</label><input type="text" id="ac-variant" placeholder="Skyhawk S"/></div>
               <div class="field"><label>YEAR</label><input type="number" id="ac-year" placeholder="2019" min="1900" max="2099" step="1"/></div>
-              <div class="field"><label>CLASS</label>
-                <select id="ac-class">
-                  <option value="">— Select —</option>
-                  <option value="SEL">SEL (Single Engine Land)</option>
-                  <option value="MEL">MEL (Multi Engine Land)</option>
-                  <option value="SES">SES (Single Engine Sea)</option>
-                  <option value="MES">MES (Multi Engine Sea)</option>
-                </select>
-              </div>
               <div class="field"><label>CATEGORY</label>
                 <select id="ac-category">
                   <option value="">— Select —</option>
@@ -450,6 +443,11 @@
                   <option value="Glider">Glider</option>
                   <option value="Rotorcraft">Rotorcraft</option>
                   <option value="Powered Lift">Powered Lift</option>
+                </select>
+              </div>
+              <div class="field"><label>CLASS</label>
+                <select id="ac-class" disabled>
+                  <option value="">— Select category first —</option>
                 </select>
               </div>
               <div class="field"><label>TYPE DESIGNATOR</label><input type="text" id="ac-type" placeholder="C172"/></div>
@@ -689,17 +687,27 @@
             <thead>
               <tr>
                 <th style="text-align:left">CATEGORY</th>
-                <th>TOTAL TIME</th>
-                <th>LAST 12 MONTHS</th>
+                <th>TOTAL</th>
+                <th>LAST 12 MO. TIME</th>
+                <th>TOTAL LANDINGS</th>
+                <th>LAST 12 MO. LANDINGS</th>
               </tr>
             </thead>
             <tbody id="rpt-ins-cat-body"></tbody>
           </table>
           <div class="report-divider" style="margin-top:16px"></div>
           <div class="report-table-wrap">
-            <div class="report-table-title">TIME BY MAKE &amp; MODEL</div>
+            <div class="report-table-title">MAKE &amp; MODEL</div>
             <table class="report-table" id="rpt-ins-table">
-              <thead><tr><th>MAKE &amp; MODEL</th><th>TOTAL</th><th>LAST 12 MONTHS</th></tr></thead>
+              <thead><tr><th>MAKE &amp; MODEL</th><th>TOTAL TIME</th><th>LAST 12 MO. TIME</th><th>TOTAL LANDINGS</th><th>LAST 12 MO. LANDINGS</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="report-divider" style="margin-top:16px"></div>
+          <div class="report-table-wrap">
+            <div class="report-table-title">MAKE &amp; MODEL BY VARIANT</div>
+            <table class="report-table" id="rpt-ins-variant-table">
+              <thead><tr><th>MAKE, MODEL &amp; VARIANT</th><th>TOTAL TIME</th><th>LAST 12 MO. TIME</th><th>TOTAL LANDINGS</th><th>LAST 12 MO. LANDINGS</th></tr></thead>
               <tbody></tbody>
             </table>
           </div>
