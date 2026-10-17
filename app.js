@@ -654,8 +654,25 @@ function resetForm() {
 
   TEXT_FIELDS.concat(NUM_FIELDS).forEach(id => { $(id).value = ''; });
   CHK_FIELDS.forEach(id => { $(id).checked = false; });
-  $('f-date').value = new Date().toISOString().split('T')[0];
+  $('f-date').value = localISODate();
 }
+
+// Today's date in the user's local time zone (toISOString uses UTC,
+// which gives tomorrow's date in the evening in the Americas).
+function localISODate(d = new Date()) {
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+// Open the native date picker on tap. Some Android Chrome builds only
+// open it from the small calendar icon, which makes the field feel locked.
+document.querySelectorAll('input[type="date"]').forEach(el => {
+  el.addEventListener('click', () => {
+    if (typeof el.showPicker === 'function') {
+      try { el.showPicker(); } catch (_) { /* already open or not allowed */ }
+    }
+  });
+});
 
 function startEdit(id) {
   const f = allFlights.find(x => x.id === id);

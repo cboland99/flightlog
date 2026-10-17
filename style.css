@@ -219,6 +219,22 @@ button { cursor: pointer; font-family: inherit; }
   box-shadow: 0 0 0 3px var(--accent-glow);
 }
 .field textarea { resize: vertical; min-height: 70px; }
+
+/* Date inputs: Android Chrome needs an explicit, tappable box or the
+   native date control can collapse and ignore taps. */
+input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  min-height: 42px;
+  line-height: 1.2;
+  cursor: pointer;
+  touch-action: manipulation;
+  color-scheme: light dark;
+}
+input[type="date"]::-webkit-date-and-time-value { text-align: left; min-height: 1.2em; }
+input[type="date"]::-webkit-datetime-edit { padding: 0; }
+input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.8; }
 .req { color: var(--red); }
 
 /* ============================================
